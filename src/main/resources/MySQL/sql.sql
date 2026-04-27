@@ -14,7 +14,6 @@ CREATE TABLE `banner`
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT '轮播图表';
 
-
 CREATE TABLE `user`
 (
     `id`          BIGINT       NOT NULL AUTO_INCREMENT,

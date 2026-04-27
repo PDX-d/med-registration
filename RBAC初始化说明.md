@@ -15,7 +15,6 @@
 
 ```java
 @Test
-public void fullInit();
 ```
 
 这个方法会按顺序执行以下步骤：
@@ -35,15 +34,12 @@ public void fullInit();
 ```java
 // 为ADMIN角色分配所有管理权限
 @Test
-public void assignPermissionsToAdminRole();
 
 // 为DOCTOR角色分配医生权限
 @Test
-public void assignPermissionsToDoctorRole();
 
 // 为USER角色分配用户权限
 @Test
-public void assignPermissionsToUserRole();
 ```
 
 #### 2️⃣ 将权限加载到Redis
@@ -51,7 +47,6 @@ public void assignPermissionsToUserRole();
 ```java
 // 从数据库读取角色权限关系，写入Redis
 @Test
-public void initRolePermissionsToRedis();
 ```
 
 #### 3️⃣ 查看Redis中的权限数据
@@ -59,7 +54,6 @@ public void initRolePermissionsToRedis();
 ```java
 // 打印所有角色的权限信息
 @Test
-public void printAllRolePermissions();
 ```
 
 #### 4️⃣ 为用户分配角色
@@ -67,7 +61,6 @@ public void printAllRolePermissions();
 ```java
 // 示例：给用户ID=1分配ADMIN角色
 @Test
-public void assignRoleToUser();
 ```
 
 #### 5️⃣ 清空Redis缓存（调试用）
@@ -75,7 +68,6 @@ public void assignRoleToUser();
 ```java
 // 清空所有角色的权限数据
 @Test
-public void clearRolePermissionsFromRedis();
 ```
 
 ## 📊 权限说明
