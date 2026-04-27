@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.AppointMapper">
+    <insert id="addPayRecord">
+        insert into pay_record(order_id, pay_time, pay_status)
+        values (#{orderId}, #{payTime}, #{payStatus})
+    </insert>
+
+
+    <update id="updateStatus">
+        update appoint_order
+        <set>
+            <if test="status==1">
+                pay_status = #{status},
+                order_status = #{status}
+            </if>
+            <if test="status==2">
+                order_status = #{status}
+            </if>
+
+            <if test="payTime != null">
+                ,pay_time = #{payTime}
+            </if>
+            <if test="cancelTime != null">
+                ,cancel_time = #{cancelTime}
+            </if>
+        </set>
+        where order_id = #{orderId}
+    </update>
+    <update id="checkOrderStatus">
+        UPDATE appoint_order o
+        JOIN pay_record r
+        ON o.order_id = r.order_id
+        SET
+        o.pay_status = 1,
+        o.order_status = 1,
+        o.pay_time = r.pay_time
+        WHERE
+        <!-- 订单表：未支付 -->
+        (o.pay_status = 0 or o.pay_time is null)
+        <!-- 支付记录表：已支付 -->
+        AND r.pay_status = 1
+        <!-- 只扫描15分钟内的支付记录（避免全表扫描） -->
+        AND r.pay_time >= #{payTime}
+    </update>
+    <select id="selectByOrderId" resultType="org.example.pojo.entity.AppointOrder">
+        select patient_id,
+               schedule_id
+        from appoint_order
+        where order_id = #{orderId}
+    </select>
+
+
+</mapper>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.InofMapper">
+
+
+    <update id="updateUsername">
+        update sys_user
+        <set>
+            <if test="realName != null and realName != ''">
+                name = #{realName},
+            </if>
+        </set>
+        where id = #{id}
+    </update>
+    <update id="updatePassword">
+        update sys_user
+        set password = #{newPassword}
+        where id = #{id}
+          and password = #{oldPassword}
+    </update>
+
+    <select id="findemail" resultType="java.lang.String">
+        select *
+        from user
+        where id = #{id}
+    </select>
+
+
+</mapper>

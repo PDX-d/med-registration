@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.RegisterMapper">
+    <insert id="addUser">
+        insert into user(username,phone,password,real_name,email,role,status,create_time,update_time,remark)
+        values(#{username},#{phone},#{password},#{realName},#{email},#{role},#{status},#{createTime},#{updateTime},#{remark})
+    </insert>
+    <select id="register" resultType="org.example.pojo.entity.SysUser">
+        select * from user where phone=#{phone}
+    </select>
+
+</mapper>

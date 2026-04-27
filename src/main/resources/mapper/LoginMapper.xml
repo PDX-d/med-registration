@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.LoginMapper">
+
+
+    <select id="login" resultType="org.example.pojo.entity.SysUser">
+        select *
+        from sys_user
+        where phone = #{phone}
+          and password = #{password}
+          and status = 1
+    </select>
+    <select id="loginWithRoles" resultType="org.example.pojo.vo.LoginUserVO">
+        SELECT su.id,
+               su.phone,
+               su.status,
+               GROUP_CONCAT(DISTINCT r.role_name)           as roleNames,
+            /**
+              核心逻辑：根据关联到的扩展表取名字，优先级可自定义，这里假设医生和用户互斥
+              */
+               IFNULL(d.username, IFNULL(u.name, '管理员')) as name
+        FROM sys_user su
+                 LEFT JOIN sys_user_role sur ON su.id = sur.user_id
+                 LEFT JOIN sys_role r ON sur.role_id = r.id
+                 LEFT JOIN user u ON su.id = u.id /** 注意：这里假设外键是 u.sys_user_id，请替换为实际字段 -->*/
+                 LEFT JOIN doctor d ON su.id = d.id /** 同上，替换为实际关联字段 */
+        WHERE su.phone = #{phone}
+        GROUP BY su.id, su.phone, su.status, u.name
+    </select>
+</mapper>

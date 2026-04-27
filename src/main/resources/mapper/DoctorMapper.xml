@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.mapper.DoctorMapper">
+
+
+
+    <select id="selectBatchByIds" resultType="java.util.Map">
+        select
+        doctor.id,
+        doctor.real_name as doctorName,
+        doctor.title,
+        depart.name as departName
+        from doctor
+        join depart on doctor.department_id = depart.id
+        where doctor.id in
+        <foreach collection="ids" open="(" separator="," close=")" item="id">
+            #{id}
+        </foreach>
+    </select>
+    <select id="hot" resultType="org.example.pojo.entity.Doctor">
+        select *
+        from doctor
+        where doctor.status = 1
+        order by doctor.count desc limit 8
+
+    </select>
+</mapper>
