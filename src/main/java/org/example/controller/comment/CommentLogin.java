@@ -1,4 +1,4 @@
-package org.example.config.comment;
+package org.example.controller.comment;
 
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
@@ -8,6 +8,7 @@ import org.example.service.LoginService;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 
 @RestController
@@ -26,8 +27,8 @@ public class CommentLogin {
 
 	@PostMapping("/login")
 	@ApiOperation(value = "登录")
-	public Result login(@Valid @RequestBody SysUser user) {
-		return loginService.Login(user);
+	public Result login(@Valid @RequestBody SysUser user, HttpServletRequest  request) {
+		return loginService.Login(user,request);
 	}
 
 	@PostMapping("/logout")

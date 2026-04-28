@@ -22,6 +22,9 @@ public class User {
 	 */
 	private String name;
 
+
+	private String realName;
+
 	/**
 	 * 手机号
 	 */
@@ -38,6 +41,20 @@ public class User {
 	 * 0未知 1男 2女
 	 */
 	private Integer gender;
+	/**
+	 * 身份证号码
+	 */
+	private String idCard;
+	/**
+	 * 真实姓名
+	 * private String realName;
+	 */
+	private LocalDateTime lastLoginTime;
+
+	/**
+	 * 最后登录IP
+	 */
+	private String lastLoginIp;
 
 	/**
 	 * 创建时间

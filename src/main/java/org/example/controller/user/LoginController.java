@@ -11,16 +11,19 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+
 @Api(tags = "用户登录")
 @Slf4j
 @RestController
 @RequestMapping("/patient")
 public class LoginController {
+
 	@Resource
 	private LoginService loginService;
 
 	@PostMapping("/login")
-	public Result login(@RequestBody SysUser user) {
-		return loginService.Login(user);
+	public Result login(@RequestBody SysUser user, HttpServletRequest  request) {
+		return loginService.Login(user,request);
 	}
 }

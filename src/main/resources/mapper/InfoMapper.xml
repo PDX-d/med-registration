@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="org.example.mapper.InofMapper">
+<mapper namespace="org.example.mapper.InfoMapper">
 
 
     <update id="updateUsername">
@@ -19,7 +19,7 @@
           and password = #{oldPassword}
     </update>
 
-    <select id="findemail" resultType="java.lang.String">
+    <select id="findEmail" resultType="java.lang.String">
         select *
         from user
         where id = #{id}

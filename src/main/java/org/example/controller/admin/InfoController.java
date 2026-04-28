@@ -27,14 +27,6 @@ public class InfoController {
 		log.info("获取信息");
 		return infoService.info();
 	}
-	@PutMapping("/username")
-	@ApiOperation(value = "修改用户名", notes = "更新用户的邮箱和真实姓名")
-	public Result updateUsername(@RequestBody Map<String ,String> params){
-		String email = params.get("email");
-		String realName = params.get("realName");
-		log.info("修改用户名:{},{}", email, realName);
-		return infoService.updateUsername(email, realName);
-	}
 
 	@PutMapping("/password")
 	@ApiOperation(value = "修改密码", notes = "更新用户登录密码")

@@ -1,4 +1,4 @@
-package org.example.config.comment;
+package org.example.controller.comment;
 
 import io.swagger.annotations.Api;
 import lombok.extern.slf4j.Slf4j;

@@ -3,19 +3,21 @@ package org.example.common.utils;
 import cn.hutool.core.bean.BeanUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.example.anno.RequirePermission;
+import org.example.mapper.UserMapper;
 import org.example.pojo.dto.UserDTO;
 import org.example.common.properties.JwtProperties;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
 
+import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static org.example.common.constants.MessageConstant.ERR_USER_NOT_LOGIN;
-import static org.example.common.constants.MessageConstant.PERMISSION_DENIED;
+import static org.example.common.constants.MessageConstant.*;
 import static org.example.common.constants.RedisConstant.*;
 
 /**
@@ -53,11 +55,14 @@ public class LoginInterceptor implements HandlerInterceptor {
 
 	private final StringRedisTemplate stringRedisTemplate;
 	private final JwtProperties jwtProperties;
+	private final UserMapper userMapper;
 
-	public LoginInterceptor(StringRedisTemplate stringRedisTemplate, JwtProperties jwtProperties) {
+	public LoginInterceptor(StringRedisTemplate stringRedisTemplate, JwtProperties jwtProperties,UserMapper userMapper) {
 		this.stringRedisTemplate = stringRedisTemplate;
 		this.jwtProperties = jwtProperties;
+		this.userMapper = userMapper;
 	}
+
 
 	/**
 	 * 前置处理：RBAC权限校验
@@ -126,5 +131,7 @@ public class LoginInterceptor implements HandlerInterceptor {
 			throws Exception {
 		UserHolder.removeUser();
 	}
+
+
 }
 

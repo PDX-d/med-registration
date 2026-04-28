@@ -34,4 +34,10 @@ public interface CopyMapper {
 	Doctor DoctorDTOToDoctor(DoctorDTO doctorDTO);
 
 	DoctorVO DoctorToDoctorVO(Doctor doctor);
+
+	SysUser SysUserDTOToSysUser(SysUserDTO sysUser);
+
+	User UserInfoDTOToUser(UserInfoDTO userInfoDTO);
+
+	UserVO UserToUserVO(User user);
 }

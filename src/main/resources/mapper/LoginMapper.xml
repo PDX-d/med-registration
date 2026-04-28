@@ -18,7 +18,8 @@
             /**
               核心逻辑：根据关联到的扩展表取名字，优先级可自定义，这里假设医生和用户互斥
               */
-               IFNULL(d.username, IFNULL(u.name, '管理员')) as name
+               IFNULL(d.username, IFNULL(u.name, '管理员')) as name,
+               u.last_login_time -- 新增：用户最后登录时间
         FROM sys_user su
                  LEFT JOIN sys_user_role sur ON su.id = sur.user_id
                  LEFT JOIN sys_role r ON sur.role_id = r.id

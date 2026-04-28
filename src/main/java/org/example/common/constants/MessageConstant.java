@@ -21,7 +21,13 @@ public class MessageConstant {
 	public static final String WECHAT_CODE_EMPTY = "微信登录失败,请重试";
 	public static final String PHONE_INVALID = "手机号格式错误";
 	public static final String PHONE_NOT_NULL = "手机号不能为空";
+	public static final String OLD_PHONE_ERROR = "原手机号错误";
 	public static final String USER_EXISTS = "该账号已经注册";
+	public static final String REGISTER_ERROR = "注册失败";
+	public static final String GET_IP_ERROR = "获取IP失败";
+	public static final String USER_INFO_MODIFY_ERROR = "用户信息修改失败";
+	public static final String PHONE_UPDATE_ERROR = "手机号修改失败";
+
 
 	/**
 	 * 权限与账号状态

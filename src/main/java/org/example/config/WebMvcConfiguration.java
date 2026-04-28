@@ -2,6 +2,7 @@ package org.example.config;
 
 import org.example.common.properties.JwtProperties;
 import org.example.common.utils.LoginInterceptor;
+import org.example.mapper.UserMapper;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -18,9 +19,11 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
 
 	@Resource
 	private JwtProperties jwtProperties;
+	@Resource
+	private UserMapper userMapper;
 
 	public void addInterceptors(InterceptorRegistry registry) {
-		registry.addInterceptor(new LoginInterceptor(stringRedisTemplate, jwtProperties))
+		registry.addInterceptor(new LoginInterceptor(stringRedisTemplate, jwtProperties,userMapper))
 				.excludePathPatterns(
 						"/comment/**",
 						"/swagger-resources/**",
