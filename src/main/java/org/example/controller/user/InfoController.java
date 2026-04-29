@@ -4,6 +4,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.example.anno.RequirePermission;
 import org.example.common.result.Result;
+import org.example.pojo.dto.PasswordDTO;
 import org.example.pojo.dto.PhoneUpdateDTO;
 import org.example.pojo.dto.UserInfoDTO;
 import org.example.service.InfoService;
@@ -39,5 +40,12 @@ public class InfoController {
 	@RequirePermission("user:updatePhone")
 	public Result changePhone(@Valid @RequestBody PhoneUpdateDTO phoneUpdateDTO) {
 		return infoService.updatePhone(phoneUpdateDTO);
+	}
+
+	@PutMapping("/change-password")
+	@ApiOperation("修改密码")
+	@RequirePermission("user:updatePassword")
+	public Result changePassword(@Valid @RequestBody PasswordDTO PasswordDTO) {
+		return infoService.updatePassword(PasswordDTO);
 	}
 }

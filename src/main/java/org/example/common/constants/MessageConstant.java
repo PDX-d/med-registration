@@ -16,6 +16,7 @@ public class MessageConstant {
 	public static final String TOKEN_PARSE_ERROR = "JWT 令牌解析失败";
 	public static final String REFRESH_TOKEN_EXPIRED_ERROR = "登录已过期,请重新登录";
 	public static final String GET_OPENID_ERROR = "登录校验失败,请重新登录";
+	public static final String PASSWORD_NOT_SAME = "两次密码不一致";
 	public static final String PASSWORD_MODIFY_ERROR = "密码修改失败,请重试";
 	public static final String USER_NOT_LOGIN = "用户登录异常,请重新登录";
 	public static final String WECHAT_CODE_EMPTY = "微信登录失败,请重试";
@@ -27,6 +28,8 @@ public class MessageConstant {
 	public static final String GET_IP_ERROR = "获取IP失败";
 	public static final String USER_INFO_MODIFY_ERROR = "用户信息修改失败";
 	public static final String PHONE_UPDATE_ERROR = "手机号修改失败";
+	public static final String USER_NOT_EXIST = "用户不存在";
+	public static final String USER_STATUS_NOT_CHANGE = "用户状态不能修改";
 
 
 	/**
@@ -37,6 +40,7 @@ public class MessageConstant {
 	public static final String ACCOUNT_NOT_FOUND = "账号不存在";
 	public static final String USER_NAME_EXISTS = "用户名已存在";
 	public static final String USER_NAME_NOT_NULL = "用户名不能为空";
+
 
 	/**
 	 * 系统与网络错误

@@ -11,7 +11,6 @@ import org.example.mapper.LoginMapper;
 import org.example.pojo.vo.LoginUserVO;
 import org.example.common.properties.JwtProperties;
 import org.example.service.LoginService;
-import org.example.common.utils.RegexUtils;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.SessionCallback;
@@ -46,7 +45,7 @@ public class LoginServiceImpl implements LoginService {
 	private StringRedisTemplate stringRedisTemplate;
 
 
-	public Boolean verifyLoginCode(String phone,String code) {
+	public Boolean verifyLoginCode(String phone, String code) {
 		//校验验证码
 		String keyCode = LOGIN_CODE_KEY + phone;
 		String rCode = stringRedisTemplate.opsForValue().get(keyCode);
@@ -92,18 +91,20 @@ public class LoginServiceImpl implements LoginService {
 		} else {
 			map.put("isFirstRegister", "0");
 		}
+		String userTokenKey = "login:user:" + loginUserVO.getId();
 		// 使用 Pipeline 保证 Redis 操作的原子性
 		stringRedisTemplate.executePipelined(new SessionCallback<Object>() {
 			@Override
 			public Object execute(RedisOperations operations) throws DataAccessException {
 				operations.opsForHash().putAll(keyToken, map);
 				operations.expire(keyToken, LOGIN_USER_TTL, TimeUnit.MINUTES);
+				operations.opsForSet().add(userTokenKey, token);
+				operations.expire(userTokenKey, LOGIN_USER_TTL, TimeUnit.MINUTES);
 				return null;
 			}
 		});
-
 		log.info("用户已登录，用户信息:{}", map);
-		return Result.ok(map);
+		return Result.success(map);
 	}
 
 	//发送验证码
@@ -114,7 +115,7 @@ public class LoginServiceImpl implements LoginService {
 		String key = LOGIN_CODE_KEY + phone;
 		stringRedisTemplate.opsForValue().set(key, code, 1, TimeUnit.MINUTES);
 		log.info("生成验证码:{}", code);
-		return Result.ok(code);
+		return Result.success(code);
 	}
 
 	/**
@@ -156,7 +157,7 @@ public class LoginServiceImpl implements LoginService {
 		if (user == null) {
 			return Result.fail(ERR_USER_NOT_LOGIN);
 		}
-		stringRedisTemplate.delete(LOGIN_TOKEN_KEY + user.getToken());
-		return Result.ok("退出成功");
+		stringRedisTemplate.delete(LOGIN_TOKEN_KEY + user.getId());
+		return Result.success("退出成功");
 	}
 }

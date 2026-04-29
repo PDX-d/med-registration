@@ -63,7 +63,7 @@ public class HomeServiceImpl implements HomeService {
 					return bannerMapper.selectList(wrapper);
 				}
 		);
-		return Result.ok(banners);
+		return Result.success(banners);
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class HomeServiceImpl implements HomeService {
 					}
 				}
 		);
-		return Result.ok(doctors);
+		return Result.success(doctors);
 	}
 
 	@Override
@@ -104,7 +104,7 @@ public class HomeServiceImpl implements HomeService {
 					return annoMapper.selectLimit(offset, pageSize, type);
 				}
 		);
-		return Result.ok(doctors);
+		return Result.success(doctors);
 	}
 
 	@Override
@@ -121,7 +121,7 @@ public class HomeServiceImpl implements HomeService {
 				.like(Anno::getContent, message)
 		);
 		List<Anno> anno = annoMapper.selectList(wrapper);
-		return Result.ok(anno);
+		return Result.success(anno);
 	}
 
 	@PostConstruct

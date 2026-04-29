@@ -7,7 +7,7 @@
         select *
         from sys_user
         where phone = #{phone}
-          and password = #{password}
+          and passwordDTO = #{passwordDTO}
           and status = 1
     </select>
     <select id="loginWithRoles" resultType="org.example.pojo.vo.LoginUserVO">

@@ -24,6 +24,7 @@ public class AppointOrderVO {
 	private LocalDate scheduleDate;     // 就诊日期：数组格式 [2026, 4, 11]
 	private String timeSlot;            // 就诊时段："上午" / "下午" / "晚上"
 	private String patientName;         // 就诊人姓名：如 "苏晓贵"
+	private String patientPhone; 		// 就诊人手机号：如 "13800000000"
 
 	// ==================== 状态信息 ====================
 	private Integer payStatus;          // 支付状态：0=待支付, 1=已支付

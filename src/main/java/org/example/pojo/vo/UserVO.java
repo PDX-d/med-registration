@@ -34,5 +34,7 @@ public class UserVO {
 	private String idCard;
 
 	private String realName;
+	private Integer status;
+
 
 }

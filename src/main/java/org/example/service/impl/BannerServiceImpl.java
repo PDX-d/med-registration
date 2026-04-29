@@ -57,7 +57,7 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
 			return Result.fail(UPLOAD_ERROR);
 		}
 		clearDepartCache();
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -67,7 +67,7 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
 		List<BannerVO> BannerList = bannerIPage.getRecords().stream().map(
 				banner -> copyMapper.BannerToBannerVO(banner)
 		).collect(Collectors.toList());
-		return Result.ok(BannerList, bannerIPage.getTotal());
+		return Result.success(BannerList, bannerIPage.getTotal());
 	}
 
 	@Override
@@ -78,7 +78,7 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
 		if (bannerVO == null) {
 			return Result.fail("轮播图不存在");
 		}
-		return Result.ok(bannerVO);
+		return Result.success(bannerVO);
 	}
 
 	@Override
@@ -95,7 +95,7 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
 			return Result.fail("更新失败");
 		}
 		clearDepartCache();
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -109,7 +109,7 @@ public class BannerServiceImpl extends ServiceImpl<BannerMapper, Banner> impleme
 			return Result.fail("删除失败");
 		}
 		clearDepartCache();
-		return Result.ok();
+		return Result.success();
 	}
 
 	/**

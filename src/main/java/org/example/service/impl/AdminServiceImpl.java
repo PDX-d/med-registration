@@ -23,6 +23,6 @@ public class AdminServiceImpl implements AdminService {
 		log.info("获取管理列表");
 		Page<UserDTO> listPage = new Page<>(page, pageSize);
 		IPage<UserDTO> adminUserPage = adminMapper.selectAdminUserPage(listPage, keyword);
-		return Result.ok(adminUserPage.getRecords(), adminUserPage.getTotal());
+		return Result.success(adminUserPage.getRecords(), adminUserPage.getTotal());
 	}
 }

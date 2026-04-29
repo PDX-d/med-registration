@@ -61,7 +61,7 @@ public class ConsultServiceImpl extends ServiceImpl<ConsultMapper, Post> impleme
 		post.setCreateTime(LocalDateTime.now());
 		post.setUpdateTime(LocalDateTime.now());
 		consultMapper.insert(post);
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -76,7 +76,7 @@ public class ConsultServiceImpl extends ServiceImpl<ConsultMapper, Post> impleme
 		if (count <= 0) {
 			return Result.fail("更新失败");
 		}
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -93,7 +93,7 @@ public class ConsultServiceImpl extends ServiceImpl<ConsultMapper, Post> impleme
 		post.setStatus(2); // 标记为已删除
 		post.setUpdateTime(LocalDateTime.now());
 		consultMapper.updateById(post);
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -108,7 +108,7 @@ public class ConsultServiceImpl extends ServiceImpl<ConsultMapper, Post> impleme
 		}
 		wrapper.orderByDesc(Post::getCreateTime);
 		IPage<Post> result = consultMapper.selectPage(pageInfo, wrapper);
-		return Result.ok(result.getRecords(), result.getTotal());
+		return Result.success(result.getRecords(), result.getTotal());
 	}
 
 	@Override
@@ -120,7 +120,7 @@ public class ConsultServiceImpl extends ServiceImpl<ConsultMapper, Post> impleme
 		// 增加浏览量
 		post.setViewCount(post.getViewCount() + 1);
 		consultMapper.updateById(post);
-		return Result.ok(post);
+		return Result.success(post);
 	}
 
 	@Override
@@ -157,7 +157,7 @@ public class ConsultServiceImpl extends ServiceImpl<ConsultMapper, Post> impleme
 			post.setLikeCount(post.getLikeCount() + 1);
 		}
 		consultMapper.updateById(post);
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -192,7 +192,7 @@ public class ConsultServiceImpl extends ServiceImpl<ConsultMapper, Post> impleme
 			post.setFavoriteCount(post.getFavoriteCount() + 1);
 		}
 		consultMapper.updateById(post);
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -221,7 +221,7 @@ public class ConsultServiceImpl extends ServiceImpl<ConsultMapper, Post> impleme
 			return map;
 		}).collect(Collectors.toList());
 
-		return Result.ok(commentList, result.getTotal());
+		return Result.success(commentList, result.getTotal());
 	}
 
 	@Override
@@ -251,7 +251,7 @@ public class ConsultServiceImpl extends ServiceImpl<ConsultMapper, Post> impleme
 		post.setCommentCount(post.getCommentCount() + 1);
 		consultMapper.updateById(post);
 
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -278,7 +278,7 @@ public class ConsultServiceImpl extends ServiceImpl<ConsultMapper, Post> impleme
 			consultMapper.updateById(post);
 		}
 
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -295,7 +295,7 @@ public class ConsultServiceImpl extends ServiceImpl<ConsultMapper, Post> impleme
 				.collect(Collectors.toList());
 
 		List<Post> posts = postIds.isEmpty() ? List.of() : consultMapper.selectBatchIds(postIds);
-		return Result.ok(posts, result.getTotal());
+		return Result.success(posts, result.getTotal());
 	}
 
 	@Override
@@ -306,6 +306,6 @@ public class ConsultServiceImpl extends ServiceImpl<ConsultMapper, Post> impleme
 				.eq(Comment::getStatus, 1)
 				.orderByDesc(Comment::getCreateTime);
 		IPage<Comment> result = commentMapper.selectPage(pageInfo, wrapper);
-		return Result.ok(result.getRecords(), result.getTotal());
+		return Result.success(result.getRecords(), result.getTotal());
 	}
 }

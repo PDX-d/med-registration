@@ -1,7 +1,6 @@
 package org.example.service.impl;
 
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -22,14 +21,10 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.example.common.constants.MessageConstant.*;
-import static org.example.common.constants.RedisConstant.ANNO_KEY;
 
 @Service
 @Slf4j
@@ -60,7 +55,7 @@ public class AnnoServiceImpl extends ServiceImpl<AnnoMapper, Anno> implements An
 		if (isSuccess < 0) {
 			return Result.fail(ANNO_ADD_ERROR);
 		}
-		return Result.ok();
+		return Result.success();
 	}
 
 	//分页查询
@@ -76,7 +71,7 @@ public class AnnoServiceImpl extends ServiceImpl<AnnoMapper, Anno> implements An
 		List<AnnoVO> voList = resultPage.getRecords().stream()
 				.map(copyMapper::AnnoToAnnoVO) // 逐个转换
 				.collect(Collectors.toList());
-		return Result.ok(voList, resultPage.getTotal());
+		return Result.success(voList, resultPage.getTotal());
 	}
 
 	@Override
@@ -87,7 +82,7 @@ public class AnnoServiceImpl extends ServiceImpl<AnnoMapper, Anno> implements An
 			return Result.fail(ANNO_NOT_FOUND);
 		}
 		AnnoVO annoVO = copyMapper.AnnoToAnnoVO(anno);
-		return Result.ok(annoVO);
+		return Result.success(annoVO);
 	}
 
 	@Override
@@ -105,7 +100,7 @@ public class AnnoServiceImpl extends ServiceImpl<AnnoMapper, Anno> implements An
 		if (isSuccess == 0) {
 			return Result.fail(UPDATE_ERROR);
 		}
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -118,6 +113,6 @@ public class AnnoServiceImpl extends ServiceImpl<AnnoMapper, Anno> implements An
 		if (isSuccess == 0) {
 			return Result.fail("删除失败");
 		}
-		return Result.ok();
+		return Result.success();
 	}
 }

@@ -62,7 +62,7 @@ public class DepartServiceImpl extends ServiceImpl<DepartMapper, Depart> impleme
 			return Result.fail(DEPT_ADD_ERROR);
 		}
 		clearDepartCache();
-		return Result.ok();
+		return Result.success();
 	}
 
 	//分页查询
@@ -78,7 +78,7 @@ public class DepartServiceImpl extends ServiceImpl<DepartMapper, Depart> impleme
 		List<DepartVO> resultList = resultPage.getRecords().stream()
 				.map(copyMapper::DepartToDepartVO)
 				.collect(Collectors.toList());
-		return Result.ok(resultList, resultPage.getTotal());
+		return Result.success(resultList, resultPage.getTotal());
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class DepartServiceImpl extends ServiceImpl<DepartMapper, Depart> impleme
 			return Result.fail(DEPT_NOT_FOUND);
 		}
 		DepartVO departVO = copyMapper.DepartToDepartVO(depart);
-		return Result.ok(departVO);
+		return Result.success(departVO);
 	}
 
 	@Override
@@ -104,7 +104,7 @@ public class DepartServiceImpl extends ServiceImpl<DepartMapper, Depart> impleme
 			return Result.fail(UPDATE_ERROR);
 		}
 		clearDepartCache();
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -118,7 +118,7 @@ public class DepartServiceImpl extends ServiceImpl<DepartMapper, Depart> impleme
 			return Result.fail(DELETE_ERROR);
 		}
 		clearDepartCache();
-		return Result.ok();
+		return Result.success();
 	}
 
 	/**
@@ -143,7 +143,7 @@ public class DepartServiceImpl extends ServiceImpl<DepartMapper, Depart> impleme
 		if (cache.get(cacheKey) != null) {
 			log.info("从Cache中获取数据");
 			List<DepartDTO> listDTO = (List<DepartDTO>) cache.get(cacheKey).get();
-			return Result.ok(listDTO);
+			return Result.success(listDTO);
 		}
 
 		//检查Redis
@@ -153,12 +153,12 @@ public class DepartServiceImpl extends ServiceImpl<DepartMapper, Depart> impleme
 			List<DepartDTO> listDTO = JSONUtil.toList(json, DepartDTO.class);
 			// 同步到Caffeine，下次直接本地拿
 			cache.put(cacheKey, listDTO);
-			return Result.ok(listDTO);
+			return Result.success(listDTO);
 		}
 		List<Depart> list = departMapper.selectList(null);
 		if (list == null) {
 			stringRedisTemplate.opsForValue().set(DEPART_ALL_KEY, "", 10, TimeUnit.SECONDS);
-			return Result.ok("数据库没有数据");
+			return Result.success("数据库没有数据");
 		}
 		//转换Dto
 		List<DepartDTO> listDTO = list.stream()
@@ -174,6 +174,6 @@ public class DepartServiceImpl extends ServiceImpl<DepartMapper, Depart> impleme
 		cache.put(cacheKey, listDTO);
 		//放进Redis
 		stringRedisTemplate.opsForValue().set(DEPART_ALL_KEY, json, 30, TimeUnit.MINUTES);
-		return Result.ok(listDTO);
+		return Result.success(listDTO);
 	}
 }

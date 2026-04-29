@@ -20,8 +20,6 @@ public class AppointOrder {
 	private Long orderId;            // 订单Id
 
 	private Long patientId;            // 患者ID
-	private String patientName;        // 患者姓名
-	private String phone;              // 手机号
 
 	private Long departId;               // 科室ID
 	private Long doctorId;             // 医生ID

@@ -227,6 +227,6 @@ public class AIServiceImpl implements AIService {
 				list.add(h);
 			}
 		}
-		return Result.ok(list);
+		return Result.success(list);
 	}
 }

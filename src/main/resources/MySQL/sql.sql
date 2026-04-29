@@ -18,7 +18,7 @@ CREATE TABLE `user`
 (
     `id`          BIGINT       NOT NULL AUTO_INCREMENT,
     `phone`       VARCHAR(50)  NOT NULL COMMENT '登录账号',
-    `password`    VARCHAR(100) NOT NULL COMMENT '密码（加密存储）',
+    `passwordDTO`    VARCHAR(100) NOT NULL COMMENT '密码（加密存储）',
     `role`        VARCHAR(20)  NOT NULL COMMENT 'admin / doctor / user',
     `status`      TINYINT      NOT NULL DEFAULT 1 COMMENT '1正常 0禁用',
     `create_time` DATETIME              DEFAULT CURRENT_TIMESTAMP,
@@ -50,7 +50,7 @@ CREATE TABLE sys_user
 (
     id       BIGINT       NOT NULL AUTO_INCREMENT COMMENT '主键',
     phone    VARCHAR(50)  NOT NULL COMMENT '手机号',
-    password VARCHAR(100) NOT NULL COMMENT '密码',
+    passwordDTO VARCHAR(100) NOT NULL COMMENT '密码',
     status   TINYINT      NOT NULL DEFAULT 1 COMMENT '1正常 0禁用',
     PRIMARY KEY (id),
     UNIQUE KEY uk_username (phone)

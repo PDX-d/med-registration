@@ -11,6 +11,7 @@ public class RedisConstant {
 	public static final String LOGIN_TOKEN_KEY = "login:token:"; // 登录令牌
 	public static final String USERID = "userId"; // 用户id
 	public static final String ROLE_PERMS_KEY = "role:perms:";
+	public static final String LOGIN_USER_KEY = "login:user:";
 
 	/**
 	 * 业务数据缓存

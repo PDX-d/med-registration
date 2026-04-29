@@ -1,8 +1,10 @@
 package org.example.common.utils;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.json.JSONUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.example.anno.RequirePermission;
+import org.example.common.result.Result;
 import org.example.mapper.UserMapper;
 import org.example.pojo.dto.UserDTO;
 import org.example.common.properties.JwtProperties;
@@ -13,6 +15,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +60,7 @@ public class LoginInterceptor implements HandlerInterceptor {
 	private final JwtProperties jwtProperties;
 	private final UserMapper userMapper;
 
-	public LoginInterceptor(StringRedisTemplate stringRedisTemplate, JwtProperties jwtProperties,UserMapper userMapper) {
+	public LoginInterceptor(StringRedisTemplate stringRedisTemplate, JwtProperties jwtProperties, UserMapper userMapper) {
 		this.stringRedisTemplate = stringRedisTemplate;
 		this.jwtProperties = jwtProperties;
 		this.userMapper = userMapper;
@@ -98,8 +101,10 @@ public class LoginInterceptor implements HandlerInterceptor {
 		String token = request.getHeader("authorization");
 		if (token == null) {
 			log.error(ERR_USER_NOT_LOGIN);
+			extracted(401, ERR_USER_NOT_LOGIN, response);
 			return false;
 		}
+		log.info("用户已登录，token:{}", token);
 		if (token.startsWith("Bearer ")) {
 			token = token.substring(7);
 		}
@@ -107,6 +112,7 @@ public class LoginInterceptor implements HandlerInterceptor {
 		Map<Object, Object> userMap = stringRedisTemplate.opsForHash().entries(key);
 		if (userMap.isEmpty()) {
 			log.error(ERR_USER_NOT_LOGIN);
+			extracted(401, ACCOUNT_NOT_FOUND, response);
 			return false;
 		}
 		UserDTO userDTO = BeanUtil.fillBeanWithMap(userMap, new UserDTO(), false);
@@ -115,15 +121,25 @@ public class LoginInterceptor implements HandlerInterceptor {
 		Boolean perms = stringRedisTemplate.opsForSet().isMember(roleKey, requiredPerm);
 		log.info("当前角色{},接口权限码:{},能否执行{}", userDTO.getRole(), requiredPerm, perms);
 		if (Boolean.FALSE.equals(perms)) {
-			log.error(PERMISSION_DENIED);
+			extracted(403, PERMISSION_DENIED, response);
 			return false;
 		}
 		log.info("用户权限正常");
 		UserHolder.saveUser(userDTO);
 		log.info("用户已登录，用户信息:{}", UserHolder.getUser());
 		// 7. 刷新 token 过期时间（滑动窗口机制，避免频繁重新登录）
-		stringRedisTemplate.expire(key, LOGIN_USER_TTL, TimeUnit.MINUTES);
+		String userTokenKey = LOGIN_USER_KEY + userDTO.getId();
+		stringRedisTemplate.expire(key, LOGIN_USER_TTL, TimeUnit.SECONDS);
+		stringRedisTemplate.expire(userTokenKey, LOGIN_USER_TTL, TimeUnit.SECONDS);
 		return true;
+	}
+
+	private static void extracted(Integer code, String errorMsg, HttpServletResponse response) throws IOException {
+		log.error(errorMsg);
+		response.setStatus(code);
+		response.setContentType("application/json;charset=UTF-8");
+		Result result = Result.fail(code, errorMsg);
+		response.getWriter().write(JSONUtil.toJsonStr(result));
 	}
 
 	@Override
@@ -131,7 +147,5 @@ public class LoginInterceptor implements HandlerInterceptor {
 			throws Exception {
 		UserHolder.removeUser();
 	}
-
-
 }
 

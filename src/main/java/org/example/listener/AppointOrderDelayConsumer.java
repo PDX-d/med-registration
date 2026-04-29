@@ -3,14 +3,13 @@ package org.example.listener;
 import lombok.extern.slf4j.Slf4j;
 import org.example.pojo.dto.OrderDelayMessageDTO;
 import org.example.mapper.AppointMapper;
-import org.example.service.impl.AppointServiceImpl;
+import org.example.service.AppointService;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
-
 
 import static org.example.common.constants.OrderConstant.*;
 import static org.example.common.constants.RabbitMQConstant.*;
@@ -30,7 +29,7 @@ public class AppointOrderDelayConsumer {
 	private RabbitTemplate rabbitTemplate;
 
 	@Resource
-	private AppointServiceImpl appointService;
+	private AppointService appointService;
 
 
 	@RabbitListener(queues = ORDER_DELAY_QUEUE)
@@ -59,12 +58,13 @@ public class AppointOrderDelayConsumer {
 		// 3. 判断是否到达最大次数 → 超时取消
 		if (retryCount >= 4) {
 			log.info("订单支付超时取消{}", orderId);
-			appointService.cancel(orderId,message.getUserId());
+			appointService.cancel(orderId, message.getUserId());
 			return;
 		}
 		// 2. 订单未支付，检查是否超时
 		sendNextDelayMessage(orderId, retryCount + 1);
 	}
+
 	/**
 	 * 发送下一次延迟消息
 	 */

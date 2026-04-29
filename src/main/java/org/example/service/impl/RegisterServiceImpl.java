@@ -79,6 +79,6 @@ public class RegisterServiceImpl implements RegisterService {
 		SysUserRole sysUserRole = new SysUserRole(null, sysUser.getId(), 2L);
 		sysUserRoleMapper.insert(sysUserRole);
 		log.info("用户注册成功，手机号：{}，用户ID：{}", sysUser.getPhone(), sysUser.getId());
-		return Result.ok();
+		return Result.success();
 	}
 }

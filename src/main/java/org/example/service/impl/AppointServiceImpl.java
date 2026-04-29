@@ -1,24 +1,16 @@
 package org.example.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import lombok.extern.slf4j.Slf4j;
 import org.example.anno.SysLog;
 import org.example.common.mapstruct.CopyMapper;
-import org.example.mapper.DepartMapper;
-import org.example.pojo.entity.AppointOrder;
-import org.example.pojo.entity.Doctor;
-import org.example.pojo.entity.PayRecord;
-import org.example.mapper.AppointMapper;
-import org.example.mapper.DoctorMapper;
-import org.example.mapper.ScheduleMapper;
+import org.example.mapper.*;
+import org.example.pojo.entity.*;
 import org.example.pojo.dto.AppointOrderDTO;
 import org.example.pojo.dto.PayDTO;
 import org.example.common.result.Result;
 import org.example.pojo.dto.UserDTO;
-import org.example.pojo.entity.Schedule;
 import org.example.service.AppointService;
 import org.example.common.utils.RedisIdWorker;
 import org.example.common.utils.UserHolder;
@@ -91,6 +83,9 @@ public class AppointServiceImpl implements AppointService {
 	@Resource
 	private DepartMapper departMapper;
 
+	@Resource
+	private UserMapper userMapper;
+
 	//预约
 	@Override
 	@SysLog("用户预约订单")
@@ -145,7 +140,7 @@ public class AppointServiceImpl implements AppointService {
 			throw new RuntimeException(e);
 		}
 
-		return Result.ok(orderMap);
+		return Result.success(orderMap);
 	}
 
 
@@ -155,36 +150,69 @@ public class AppointServiceImpl implements AppointService {
 		String key = APPOINT_ORDER_KEY + scheduleId;
 		String count = stringRedisTemplate.opsForValue().get(key);
 		if (StrUtil.isNotBlank(count)) {
-			return Result.ok(count);
+			return Result.success(count);
 		}
 		Schedule schedule = scheduleMapper.selectById(scheduleId);
 		if (schedule == null) {
 			return Result.fail("排班不存在");
 		}
 		stringRedisTemplate.opsForValue().set(key, String.valueOf(schedule.getRemainingCount()));
-		return Result.ok(String.valueOf(schedule.getRemainingCount()));
+		return Result.success(String.valueOf(schedule.getRemainingCount()));
 	}
 
 	//预约列表
 	@Override
 	public Result list() {
-		UserDTO user = UserHolder.getUser();
-		if (user == null) {
+		UserDTO userDTO = UserHolder.getUser();
+		if (userDTO == null) {
 			return Result.fail(ERR_USER_NOT_LOGIN);
 		}
+		//查询当前用户订单
+		User user = userMapper.selectById(userDTO.getId());
 		LambdaQueryWrapper<AppointOrder> wrapper = new LambdaQueryWrapper<>();
 		wrapper.eq(AppointOrder::getPatientId, user.getId());
 		List<AppointOrder> appointOrders = appointMapper.selectList(wrapper);
+		if (appointOrders.isEmpty()) {
+			return Result.success(Collections.emptyList());
+		}
+
+		// 批量查询医生：收集所有不重复的 doctorId，一次查出
+		List<Long> doctorIds = appointOrders
+				.stream()
+				.map(AppointOrder::getDoctorId)
+				.distinct()
+				.collect(Collectors.toList());
+		Map<Long, Doctor> doctorMap = doctorMapper.selectBatchIds(doctorIds)
+				.stream()
+				.collect(Collectors.toMap(Doctor::getId, doctor -> doctor));
+// 批量查询科室：收集所有不重复的 departmentId，一次查出
+		List<Long> departIds = appointOrders
+				.stream()
+				.map(AppointOrder::getDepartId)
+				.distinct()
+				.collect(Collectors.toList());
+		Map<Long, Depart> departMap = departIds.isEmpty()
+				? Collections.emptyMap()
+				: departMapper.selectBatchIds(departIds).stream()
+				.collect(Collectors.toMap(Depart::getId, d -> d));
+		// 组装 VO
 		List<AppointOrderVO> appointOrderVOS = new ArrayList<>();
 		for (AppointOrder appointOrder : appointOrders) {
 			AppointOrderVO appointOrderVO = copyMapper.AppointToAppointVO(appointOrder);
-			Doctor doctor = doctorMapper.selectById(appointOrder.getDoctorId());
-			appointOrderVO.setDoctorName(doctor.getRealName());
-			appointOrderVO.setTitle(doctor.getTitle());
-			appointOrderVO.setDepartmentName(departMapper.selectById(doctor.getDepartmentId()).getName());
+			Doctor doctor = doctorMap.get(appointOrder.getDoctorId());
+			if (doctor != null) {
+				appointOrderVO.setDoctorName(doctor.getRealName());
+				appointOrderVO.setTitle(doctor.getTitle());
+				Depart depart = departMap.get(doctor.getDepartmentId());
+				if (depart != null) {
+					appointOrderVO.setDepartmentName(depart.getName());
+				}
+			}
+			appointOrderVO.setPatientName(user.getRealName());
+			appointOrderVO.setPatientPhone(user.getPhone());
 			appointOrderVOS.add(appointOrderVO);
 		}
-		return Result.ok(appointOrderVOS);
+		return Result.success(appointOrderVOS);
 	}
 
 	@Override
@@ -245,7 +273,7 @@ public class AppointServiceImpl implements AppointService {
 		} finally {
 			lock.unlock();
 		}
-		return Result.ok();
+		return Result.success();
 		/**
 		 第一个是越权漏洞:
 		 取消和支付接口一开始都没有校验订单归属，就是说只要传个orderId就能取消任何人的订单。
@@ -275,29 +303,36 @@ public class AppointServiceImpl implements AppointService {
 			return Result.fail("订单已取消，请勿重复操作");
 		}
 		String key = APPOINT_ORDER_STATUS_KEY + orderId;
-		//redis获取订单状态
-		AppointOrder appointOrder = appointMapper.selectByOrderId(orderId);
-		String status = String.valueOf(appointOrder.getOrderStatus());
-		if (status.equals(String.valueOf(PAY_STATUS_FAILED))) {
-			//订单不存在或者还没支付
-			return Result.fail("取消失败");
+		try {
+			//redis获取订单状态
+			AppointOrder appointOrder = appointMapper.selectByOrderId(orderId);
+			String status = String.valueOf(appointOrder.getOrderStatus());
+			if (status.equals(String.valueOf(PAY_STATUS_FAILED))) {
+				//订单不存在或者还没支付
+				return Result.fail("取消失败");
+			}
+			//订单取消
+			Result extracted = extracted(orderId, userId);
+			if (extracted.getCode() != 200) {
+				return extracted;
+			}
+		} catch (Exception e) {
+			stringRedisTemplate.delete(idempotentKey);
 		}
-		//订单取消
-		extracted(orderId, userId);
 		stringRedisTemplate.delete(key);
-		return Result.ok();
+		return Result.success();
 	}
 
-	public void extracted(Long orderId, Long userId) {
+	public Result extracted(Long orderId, Long userId) {
 		AppointOrder appointCancel = appointMapper.selectByOrderId(orderId);
 		if (appointCancel == null) {
 			log.info("排班不存在");
-			return;
+			return Result.fail("排班不存在");
 		}
 		//权限校验 验证该订单是不是该用户的
 		if (!appointCancel.getPatientId().equals(userId)) {
 			log.info("用户无权限取消");
-			return;
+			return Result.fail("用户无权限取消");
 		}
 		Map<String, Object> map = new HashMap<>();
 		map.put("orderId", orderId);
@@ -319,9 +354,10 @@ public class AppointServiceImpl implements AppointService {
 			r = result.intValue();
 			if (r != 0) {
 				log.info("取消失败");
-				return;
+				return Result.fail("取消失败");
 			}
 		}
 		log.info("订单取消成功 orderId={}", orderId);
+		return Result.success();
 	}
 }

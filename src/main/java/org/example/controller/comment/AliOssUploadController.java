@@ -29,7 +29,7 @@ public class AliOssUploadController {
 		String substring = fileName.substring(fileName.lastIndexOf("."));
 		String objectName = UUID.randomUUID().toString() + substring;
 		String url = aliOssUtil.upload(file.getBytes(),objectName);
-		return Result.ok(url);
+		return Result.success(url);
 	}
 
 }

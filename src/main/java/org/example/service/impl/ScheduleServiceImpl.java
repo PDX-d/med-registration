@@ -71,7 +71,7 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 		}
 		String cacheKey = DOCTOR_SCHEDULE_KEY + schedule.getDoctorId();
 		stringRedisTemplate.delete(cacheKey);
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -89,7 +89,7 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 		List<ScheduleVO> scheduleList = resultPage.getRecords().stream()
 				.map(copyMapper::ScheduleToScheduleVO)
 				.collect(Collectors.toList());
-		return Result.ok(scheduleList, resultPage.getTotal());
+		return Result.success(scheduleList, resultPage.getTotal());
 	}
 
 	@Override
@@ -99,7 +99,7 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 			return Result.fail(ERR_SCHEDULE_NOT_EXIST);
 		}
 		ScheduleVO scheduleVO = copyMapper.ScheduleToScheduleVO(schedule);
-		return Result.ok(scheduleVO);
+		return Result.success(scheduleVO);
 	}
 
 	@Override
@@ -112,7 +112,7 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 		schedule.setUpdateTime(LocalDateTime.now());
 		scheduleMapper.update(schedule, new LambdaQueryWrapper<Schedule>().eq(Schedule::getId, schedule.getId()));
 		clearDepartCache(schedule.getDoctorId());
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -126,7 +126,7 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 		Long doctorId = scheduleMapper.selectById(id).getDoctorId();
 		scheduleMapper.deleteById(id);
 		clearDepartCache(doctorId);
-		return Result.ok();
+		return Result.success();
 	}
 
 	private void clearDepartCache(Long doctorId) {
@@ -142,16 +142,20 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 		if (StrUtil.isNotBlank(json)) {
 			log.info(REDIS_YES);
 			List<ScheduleVO> scheduleVOList = JSONUtil.toList(json, ScheduleVO.class);
-			return Result.ok(scheduleVOList);
+			return Result.success(scheduleVOList);
 		}
-		LambdaQueryWrapper<Schedule> Wrapper = new LambdaQueryWrapper<Schedule>()
-				.eq(Schedule::getDoctorId, doctorId).eq(Schedule::getStatus, 1);
+		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime allowBefore = now.plusMinutes(30);  // 必须 > 当前+30分钟才能约
+		LambdaQueryWrapper<Schedule> Wrapper = new LambdaQueryWrapper<Schedule>();
+		Wrapper.eq(Schedule::getDoctorId, doctorId)
+				.eq(Schedule::getStatus, 1)
+				.gt(Schedule::getScheduleDate, allowBefore);    // > 30分钟后（不到30分不显示）
 		List<Schedule> scheduleList = scheduleMapper.selectList(Wrapper);
 		List<ScheduleVO> scheduleVOList = scheduleList.stream()
 				.map(schedule -> copyMapper.ScheduleToScheduleVO(schedule))
 				.collect(Collectors.toList());
 		json = JSONUtil.toJsonStr(scheduleVOList);
 		stringRedisTemplate.opsForValue().set(Key, json, HOME_TTL, TimeUnit.SECONDS);
-		return Result.ok(scheduleVOList);
+		return Result.success(scheduleVOList);
 	}
 }

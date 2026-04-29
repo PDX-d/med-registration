@@ -4,35 +4,46 @@ package org.example.controller.admin;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.example.pojo.dto.Password;
+import org.example.anno.RequirePermission;
 import org.example.common.result.Result;
+import org.example.mapper.UserMapper;
+import org.example.pojo.dto.UpdateStatus;
 import org.example.service.InfoService;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import java.util.Map;
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
-@Api(tags = "信息管理")
+@Api(tags = "用户信息管理")
 @Slf4j
 @RestController
-@RequestMapping
+@RequestMapping("/admin")
 public class InfoController {
 
 	@Resource
 	private InfoService infoService;
 
-	@GetMapping("/info")
-	@ApiOperation(value = "获取用户信息", notes = "获取当前登录用户的详细信息")
-	public Result info(){
-		log.info("获取信息");
-		return infoService.info();
-	}
+	@Resource
+	private UserMapper userMapper;
 
-	@PutMapping("/password")
-	@ApiOperation(value = "修改密码", notes = "更新用户登录密码")
-	public Result updatePassword(@RequestBody Password  password){
-		log.info("修改用户名:{}", password);
-		return infoService.updatePassword(password);
-	}
+	@Resource
+	private StringRedisTemplate stringRedisTemplate;
 
+	@GetMapping("/patient/list")
+	@ApiOperation(value = "获取用户信息", notes = "获取用户信息")
+	@RequirePermission("admin:user:list")
+	public Result list(@RequestParam(defaultValue = "1") Long page,
+					   @RequestParam(defaultValue = "10") Long pageSize,
+					   @RequestParam(required = false) String keyword
+	) {
+		return infoService.list(page, pageSize, keyword);
+	}
+	@PutMapping("/patient/updateStatus")
+	@ApiOperation(value = "更新用户状态", notes = "更新用户状态")
+	@RequirePermission("admin:user:updateStatus")
+	public Result updateStatus(@Valid @RequestBody UpdateStatus updateStatus) {
+		return infoService.updateStatus(updateStatus);
+	}
 }

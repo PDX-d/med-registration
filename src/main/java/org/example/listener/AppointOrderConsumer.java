@@ -59,6 +59,7 @@ public class AppointOrderConsumer {
 				log.error(ERR_STOCK_NOT_ENOUGH);
 				return;
 			}
+
 			// 4. 创建订单
 			UserDTO userDTO = appointOrderDTO.getUserDTO();
 			AppointOrder appointOrder = new AppointOrder();
@@ -67,8 +68,6 @@ public class AppointOrderConsumer {
 
 			// 用户信息
 			appointOrder.setPatientId(userDTO.getId());
-			appointOrder.setPatientName(userDTO.getName());
-			appointOrder.setPhone(userDTO.getPhone());
 
 			// 医院/医生/排班
 			appointOrder.setDepartId(appointOrderDTO.getDepartId());

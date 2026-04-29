@@ -34,7 +34,6 @@ import java.util.stream.Collectors;
 
 import static org.example.common.constants.MessageConstant.*;
 import static org.example.common.constants.RedisConstant.DEPART_DOCTOR_KEY;
-import static org.example.common.constants.RedisConstant.HOME_KEY;
 
 @Service
 @Slf4j
@@ -86,7 +85,7 @@ public class DoctorServiceImpl extends ServiceImpl<DoctorMapper, Doctor> impleme
 		sysUserRole.setRoleId(2L);
 		sysUserRoleMapper.insert(sysUserRole);
 		clearDepartCache(sysUser.getId());
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -108,7 +107,7 @@ public class DoctorServiceImpl extends ServiceImpl<DoctorMapper, Doctor> impleme
 		List<DoctorVO> collectList = resultPage.getRecords().stream()
 				.map(copyMapper::DoctorToDoctorVO) // 逐个转换
 				.collect(Collectors.toList());
-		return Result.ok(collectList, resultPage.getTotal());
+		return Result.success(collectList, resultPage.getTotal());
 	}
 
 	@Override
@@ -118,7 +117,7 @@ public class DoctorServiceImpl extends ServiceImpl<DoctorMapper, Doctor> impleme
 		if (StrUtil.isNotBlank(json)) {
 			log.info("从Redis中获取数据");
 			List<Doctor> doctorList = JSONUtil.toList(json, Doctor.class);
-			return Result.ok(doctorList);
+			return Result.success(doctorList);
 		}
 		LambdaQueryWrapper<Doctor> wrapper = new LambdaQueryWrapper<>();
 		wrapper.eq(Doctor::getDepartmentId, id);
@@ -130,7 +129,7 @@ public class DoctorServiceImpl extends ServiceImpl<DoctorMapper, Doctor> impleme
 		}
 		json = JSONUtil.toJsonStr(doctorList);
 		stringRedisTemplate.opsForValue().set(key, json);
-		return Result.ok(doctorList);
+		return Result.success(doctorList);
 	}
 
 	@Override
@@ -153,7 +152,7 @@ public class DoctorServiceImpl extends ServiceImpl<DoctorMapper, Doctor> impleme
 		sysUserMapper.deleteById(id);
 		stringRedisTemplate.delete(DEPART_DOCTOR_KEY + doctor.getDepartmentId());
 		clearDepartCache(id);
-		return Result.ok();
+		return Result.success();
 	}
 
 	@Override
@@ -163,7 +162,7 @@ public class DoctorServiceImpl extends ServiceImpl<DoctorMapper, Doctor> impleme
 			return Result.fail("医生不存在");
 		}
 		DoctorVO doctorVO = copyMapper.DoctorToDoctorVO(doctor);
-		return Result.ok(doctorVO);
+		return Result.success(doctorVO);
 	}
 
 	@Override
@@ -179,7 +178,7 @@ public class DoctorServiceImpl extends ServiceImpl<DoctorMapper, Doctor> impleme
 			return Result.fail(UPDATE_ERROR);
 		}
 		clearDepartCache(doctor.getDepartmentId());
-		return Result.ok();
+		return Result.success();
 	}
 
 	private void clearDepartCache(Long departmentId) {

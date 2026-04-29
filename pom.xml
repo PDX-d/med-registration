@@ -119,6 +119,7 @@
             <artifactId>springfox-swagger2</artifactId>
             <version>2.9.2</version>
         </dependency>
+
         <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger-ui</artifactId>
@@ -152,12 +153,6 @@
             <version>6.2.5.Final</version>
         </dependency>
 
-        <!--api限流-->
-        <dependency>
-            <groupId>com.google.guava</groupId>
-            <artifactId>guava</artifactId>
-            <version>31.1-jre</version>
-        </dependency>
         <!-- MapStruct 核心依赖 -->
         <dependency>
             <groupId>org.mapstruct</groupId>
