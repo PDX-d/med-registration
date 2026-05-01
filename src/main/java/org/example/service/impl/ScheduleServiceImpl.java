@@ -10,8 +10,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.example.common.mapstruct.CopyMapper;
 import org.example.common.result.Result;
+import org.example.mapper.DoctorMapper;
 import org.example.pojo.dto.ScheduleDTO;
+import org.example.pojo.dto.ScheduleStatusDTO;
 import org.example.pojo.dto.UserDTO;
+import org.example.pojo.entity.Doctor;
 import org.example.pojo.entity.Schedule;
 import org.example.mapper.ScheduleMapper;
 import org.example.pojo.vo.ScheduleVO;
@@ -22,8 +25,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -45,6 +51,9 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 	@Resource
 	private CopyMapper copyMapper;
 
+	@Resource
+	private DoctorMapper doctorMapper;
+
 	//  管理端
 	@Override
 	public Result add(ScheduleDTO scheduleDTO) {
@@ -64,6 +73,8 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 			}
 			log.info("排班结束时间:{}", schedule.getReleaseTime());
 		}
+
+		log.info("排班信息:{}", schedule);
 		try {
 			scheduleMapper.insert(schedule);
 		} catch (Exception e) {
@@ -75,7 +86,7 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 	}
 
 	@Override
-	public Result list(Long page, Long pageSize, String departmentId, String date) {
+	public Result list(Long page, Long pageSize, String departmentId, String doctorId, String date) {
 		log.info("获取排班信息:{}", page);
 		Page<Schedule> pageList = new Page<>(page, pageSize);
 		LambdaQueryWrapper<Schedule> wrapper = new LambdaQueryWrapper<>();
@@ -85,6 +96,11 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 		if (date != null) {
 			wrapper.eq(Schedule::getScheduleDate, date);
 		}
+		if (doctorId != null) {
+			wrapper.eq(Schedule::getDoctorId, doctorId);
+		}
+		wrapper.eq(Schedule::getIsDeleted, 0);
+		wrapper.orderByDesc(Schedule::getScheduleDate);
 		IPage<Schedule> resultPage = scheduleMapper.selectPage(pageList, wrapper);
 		List<ScheduleVO> scheduleList = resultPage.getRecords().stream()
 				.map(copyMapper::ScheduleToScheduleVO)
@@ -124,8 +140,10 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 		log.info("删除排班信息:{}", id);
 		//获取医生id
 		Long doctorId = scheduleMapper.selectById(id).getDoctorId();
-		scheduleMapper.deleteById(id);
+		scheduleMapper.isDelete(id);
 		clearDepartCache(doctorId);
+		String cacheKey = APPOINT_ORDER_KEY + id;
+		stringRedisTemplate.delete(cacheKey);
 		return Result.success();
 	}
 
@@ -144,12 +162,13 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 			List<ScheduleVO> scheduleVOList = JSONUtil.toList(json, ScheduleVO.class);
 			return Result.success(scheduleVOList);
 		}
-		LocalDateTime now = LocalDateTime.now();
-		LocalDateTime allowBefore = now.plusMinutes(30);  // 必须 > 当前+30分钟才能约
+		LocalDate now = LocalDate.now();  // 必须 > 当前+30分钟才能约
 		LambdaQueryWrapper<Schedule> Wrapper = new LambdaQueryWrapper<Schedule>();
 		Wrapper.eq(Schedule::getDoctorId, doctorId)
 				.eq(Schedule::getStatus, 1)
-				.gt(Schedule::getScheduleDate, allowBefore);    // > 30分钟后（不到30分不显示）
+				.gt(Schedule::getScheduleDate, now)
+				.eq(Schedule::getIsDeleted, 0)
+		;    // > 30分钟后（不到30分不显示）
 		List<Schedule> scheduleList = scheduleMapper.selectList(Wrapper);
 		List<ScheduleVO> scheduleVOList = scheduleList.stream()
 				.map(schedule -> copyMapper.ScheduleToScheduleVO(schedule))
@@ -157,5 +176,33 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 		json = JSONUtil.toJsonStr(scheduleVOList);
 		stringRedisTemplate.opsForValue().set(Key, json, HOME_TTL, TimeUnit.SECONDS);
 		return Result.success(scheduleVOList);
+	}
+
+	@Override
+	public Result getCurrentUser() {
+		UserDTO user = UserHolder.getUser();
+		if (user == null) {
+			return Result.fail(ERR_USER_NOT_LOGIN);
+		}
+		Doctor doctor = doctorMapper.selectById(user.getId());
+		Map<String, Object> map = new HashMap<>();
+		map.put("doctorId", user.getId());
+		map.put("departmentId", doctor.getDepartmentId());
+		return Result.success(map);
+	}
+
+	@Override
+	public Result updateStatus(ScheduleStatusDTO scheduleDTO) {
+		UserDTO user = UserHolder.getUser();
+		if (user == null) {
+			return Result.fail(ERR_USER_NOT_LOGIN);
+		}
+		try {
+			scheduleMapper.updateStatus(scheduleDTO);
+		} catch (Exception e) {
+			return Result.fail("排班不存在");
+		}
+		clearDepartCache(scheduleDTO.getId());
+		return Result.success();
 	}
 }

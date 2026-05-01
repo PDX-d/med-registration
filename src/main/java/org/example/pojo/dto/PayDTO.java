@@ -14,8 +14,6 @@ import java.math.BigDecimal;
 public class PayDTO {
 	@NotNull(message = "订单ID不能为空")
 	private Long orderId;
-	@NotBlank(message = "支付金额不能为空")
 	private BigDecimal payAmount;
-	@NotBlank(message = "支付方式不能为空")
 	private String payMethod;
 }

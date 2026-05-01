@@ -49,6 +49,42 @@
         from appoint_order
         where order_id = #{orderId}
     </select>
+    <select id="selectDoctorListPage" resultType="org.example.pojo.vo.AppointVO">
+        SELECT
+        o.order_status as  status,
+        o.create_time,
+        o.time_slot,
+        o.schedule_date AS appointment_date,
+        u.real_name AS patient_name,
+        u.phone AS patient_phone,
+        dep.name AS department_name
+        FROM appoint_order o
+        LEFT JOIN user u ON o.patient_id = u.id
+        LEFT JOIN doctor d ON o.doctor_id = d.id
+        LEFT JOIN depart dep ON o.depart_id = dep.id
+        <where>
+            o.doctor_id = #{id}
+            <if test="status != null and status != ''">
+                AND o.order_status = #{status}
+            </if>
+
+            <if test="time != null and time != ''">
+                AND o.schedule_data = #{time}
+            </if>
+
+            <!-- 动态条件：关键词搜索 (模糊匹配医生名字或订单号) -->
+            <if test="keyword != null and keyword != ''">
+                AND (
+                u.real_name LIKE CONCAT('%', #{keyword}, '%')
+                OR u.phone LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+        </where>
+        ORDER BY o.create_time DESC
+
+    </select>
+
+
 
 
 </mapper>

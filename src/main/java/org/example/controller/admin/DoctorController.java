@@ -6,7 +6,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.anno.RequirePermission;
 import org.example.common.result.Result;
 import org.example.pojo.dto.DoctorDTO;
-import org.example.pojo.entity.Doctor;
 import org.example.service.DoctorService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -41,7 +40,7 @@ public class DoctorController {
 					   @RequestParam(required = false) Long departmentId
 	) {
 		log.info("获取所有医生列表");
-		return doctorService.listt(page, pageSize, keyword, departmentId);
+		return doctorService.list(page, pageSize, keyword, departmentId);
 	}
 
 	@GetMapping("/department/{id}")

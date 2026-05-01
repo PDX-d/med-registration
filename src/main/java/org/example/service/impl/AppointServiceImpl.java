@@ -2,6 +2,8 @@ package org.example.service.impl;
 
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.example.anno.SysLog;
 import org.example.common.mapstruct.CopyMapper;
@@ -11,6 +13,7 @@ import org.example.pojo.dto.AppointOrderDTO;
 import org.example.pojo.dto.PayDTO;
 import org.example.common.result.Result;
 import org.example.pojo.dto.UserDTO;
+import org.example.pojo.vo.AppointVO;
 import org.example.service.AppointService;
 import org.example.common.utils.RedisIdWorker;
 import org.example.common.utils.UserHolder;
@@ -322,6 +325,20 @@ public class AppointServiceImpl implements AppointService {
 		stringRedisTemplate.delete(key);
 		return Result.success();
 	}
+
+	@Override
+	public Result DoctorList(Long page, Long pageSize, String status, String time, String keyword) {
+		UserDTO user = UserHolder.getUser();
+		if (user == null) {
+			return Result.fail(ERR_USER_NOT_LOGIN);
+		}
+		Page<AppointOrder> pageParam = new Page<>(page, pageSize);
+		IPage<AppointVO> pageModel = appointMapper
+				.selectDoctorListPage(pageParam, status, time, keyword, user.getId());
+
+		return Result.success(pageModel.getRecords(), pageModel.getTotal());
+	}
+
 
 	public Result extracted(Long orderId, Long userId) {
 		AppointOrder appointCancel = appointMapper.selectByOrderId(orderId);

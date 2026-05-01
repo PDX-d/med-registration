@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.Valid;
 
 
 @Api(tags = "AI")
@@ -23,9 +24,10 @@ public class AI {
 
 	@PostMapping(value = "/stream", produces = "text/event-stream;charset=utf-8")
 	@ApiOperation(value = "AI流式对话", notes = "与AI助手进行流式对话交互")
-	public void stream(@RequestBody ChatMessage chatMessage, HttpServletResponse response) {
+	public void stream(@Valid @RequestBody ChatMessage chatMessage, HttpServletResponse response) {
 		aiService.ai(chatMessage, response);
 	}
+
 	@GetMapping("/history")
 	@ApiOperation(value = "获取对话历史", notes = "获取用户的AI对话历史记录")
 	public Result history(@RequestParam Long userId) {

@@ -100,7 +100,7 @@ public class LoginInterceptor implements HandlerInterceptor {
 		}
 		String token = request.getHeader("authorization");
 		if (token == null) {
-			log.error(ERR_USER_NOT_LOGIN);
+			log.error(ERR_USER_NOT_LOGIN+"token");
 			extracted(401, ERR_USER_NOT_LOGIN, response);
 			return false;
 		}
@@ -111,7 +111,7 @@ public class LoginInterceptor implements HandlerInterceptor {
 		String key = LOGIN_TOKEN_KEY + token;
 		Map<Object, Object> userMap = stringRedisTemplate.opsForHash().entries(key);
 		if (userMap.isEmpty()) {
-			log.error(ERR_USER_NOT_LOGIN);
+			log.error(ERR_USER_NOT_LOGIN+"Redis");
 			extracted(401, ACCOUNT_NOT_FOUND, response);
 			return false;
 		}

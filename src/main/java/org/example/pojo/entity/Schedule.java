@@ -47,4 +47,7 @@ public class Schedule  implements Serializable {
 	@TableField(fill = FieldFill.INSERT_UPDATE)
 	private LocalDateTime updateTime;
 
+	private Integer isDeleted;
+
+	private LocalDateTime deleteTime;
 }

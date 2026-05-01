@@ -37,9 +37,10 @@ public class ScheduleController {
 	public Result list(@RequestParam(defaultValue = "1") Long page,
 					   @RequestParam(defaultValue = "10") Long pageSize,
 					   @RequestParam(required = false) String departmentId,
+					   @RequestParam(required = false) String doctorId,
 					   @RequestParam(required = false) String date
 	) {
-		return scheduleService.list(page, pageSize, departmentId, date);
+		return scheduleService.list(page, pageSize,doctorId, departmentId, date);
 	}
 
 	@GetMapping("/detail/{id}")

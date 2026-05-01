@@ -14,4 +14,6 @@ public interface AppointService {
 	Result pay(PayDTO payDTO);
 
 	Result cancel(Long orderId, Long userId);
+
+	Result DoctorList(Long page, Long pageSize, String status, String time, String keyword);
 }

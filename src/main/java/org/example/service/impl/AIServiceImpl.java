@@ -38,6 +38,11 @@ public class AIServiceImpl implements AIService {
 	@Resource
 	private StringRedisTemplate stringRedisTemplate;
 
+	private static final String ROLE = "role";
+	private static final String TYPE = "type";
+	private static final String CONTENT_TYPE = "content_type";
+	private static final String CONTENT = "content";
+
 	@Override
 	public void ai(ChatMessage chatMessage, HttpServletResponse response) {
 		//告诉浏览器这是流式输出text/event-stream
@@ -58,18 +63,18 @@ public class AIServiceImpl implements AIService {
 			if (history != null && !history.isEmpty()) {
 				for (History msg : history) {
 					msgList.add(JSONUtil.createObj()
-							.set("role", msg.getRole())
-							.set("type", "question")
-							.set("content_type", "text")
-							.set("content", msg.getContent()));
+							.set(ROLE, msg.getRole())
+							.set(TYPE, "question")
+							.set(CONTENT_TYPE, "text")
+							.set(CONTENT, msg.getContent()));
 				}
 			}
 			// 当前问题
 			msgList.add(JSONUtil.createObj()
-					.set("role", "user")
-					.set("type", "question")
-					.set("content_type", "text")
-					.set("content", chatMessage.getMessage()));
+					.set(ROLE, "user")
+					.set(TYPE, "question")
+					.set(CONTENT_TYPE, "text")
+					.set(CONTENT, chatMessage.getMessage()));
 
 			//打包请求体
 			String body = JSONUtil.createObj()
@@ -97,45 +102,35 @@ public class AIServiceImpl implements AIService {
 			// 用来拼接 AI 完整回答Redis
 			StringBuilder aiFullReasonContent = new StringBuilder();
 			StringBuilder aiFullContent = new StringBuilder();
-
 			//读取流式响应
 			try (InputStream is = conn.getInputStream();
 				 BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-
 				String line;
 				String currentEvent = "";
-
 				while ((line = reader.readLine()) != null) {
 					// 检查客户端是否断开连接
 					if (response.getWriter().checkError()) {
 						log.info("客户端已断开连接，停止请求");
 						break;
 					}
-
 					log.info("Coze返回: {}", line);
-
 					if (line.startsWith("event:")) {
 						currentEvent = line.substring(6).trim();
 						continue;
 					}
-
 					if (!line.startsWith("data:")) {
 						continue;
 					}
-
 					String data = line.substring(5).trim();
 					if (data.isEmpty()) {
 						continue;
 					}
-
 					// 过滤掉 Coze 内部结束包，不再返回给前端
 					if (data.contains("generate_answer_finish")) {
 						continue;
 					}
-
 					if (currentEvent.contains("conversation.message.delta") ||
 							currentEvent.contains("conversation.message.completed")) {
-
 						try {
 							JSONObject jsonObj = JSONUtil.parseObj(data);
 
@@ -152,7 +147,6 @@ public class AIServiceImpl implements AIService {
 								//立刻发送
 								response.getWriter().flush();
 							}
-
 							String content = jsonObj.getStr("content", "");
 							if (content != null && !content.isEmpty()) {
 								aiFullContent.append(content);
@@ -165,8 +159,6 @@ public class AIServiceImpl implements AIService {
 								response.getWriter().write("data: {\"content\":\"" + content + "\"}\n\n");
 								response.getWriter().flush();
 							}
-
-
 						} catch (Exception e) {
 							log.error("解析失败", e);
 						}
@@ -177,7 +169,6 @@ public class AIServiceImpl implements AIService {
 						aiFullContent.toString(),
 						aiFullReasonContent.toString(),
 						null); // questions 由前端返回时自带
-
 				response.getWriter().write("data: [DONE]\n\n");
 				response.getWriter().flush();
 			}
@@ -194,7 +185,6 @@ public class AIServiceImpl implements AIService {
 	private void saveHistory(Long userId, String role, String content, String reasoning, List<String> questions) {
 		//保存历史记录
 		String key = AI_HISTORY_KEY + userId;
-
 		History history = new History();
 		history.setRole(role);
 		history.setContent(content);
@@ -207,14 +197,11 @@ public class AIServiceImpl implements AIService {
 		stringRedisTemplate.opsForList().rightPush(key, json);
 		// 设置过期时间 7 天
 		stringRedisTemplate.expire(key, 7, java.util.concurrent.TimeUnit.DAYS);
-
-
  	}
 	// 获取当前时间 16:20
 	private String getCurrentTime() {
 		return new java.text.SimpleDateFormat("HH:mm").format(new java.util.Date());
 	}
-
 	@Override
 	public Result history(Long userId) {
 		//获取历史记录

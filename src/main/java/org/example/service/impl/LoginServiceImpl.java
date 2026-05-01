@@ -22,6 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -157,7 +158,14 @@ public class LoginServiceImpl implements LoginService {
 		if (user == null) {
 			return Result.fail(ERR_USER_NOT_LOGIN);
 		}
-		stringRedisTemplate.delete(LOGIN_TOKEN_KEY + user.getId());
+		Set<String> members = stringRedisTemplate.opsForSet().members(LOGIN_USER_KEY + user.getId());
+		if (members == null || members.isEmpty()) {
+			return Result.fail(ERR_USER_NOT_LOGIN);
+		}
+		for (String token : members) {
+			stringRedisTemplate.delete(LOGIN_TOKEN_KEY + token);
+		}
+
 		return Result.success("退出成功");
 	}
 }

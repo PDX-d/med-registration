@@ -89,7 +89,7 @@ public class DoctorServiceImpl extends ServiceImpl<DoctorMapper, Doctor> impleme
 	}
 
 	@Override
-	public Result listt(Long page, Long pageSize, String keyword, Long departmentId) {
+	public Result list(Long page, Long pageSize, String keyword, Long departmentId) {
 		Page<Doctor> listPage = new Page<>(page, pageSize);
 		LambdaQueryWrapper<Doctor> wrapper = new LambdaQueryWrapper<>();
 		// 标题模糊查询
@@ -102,7 +102,7 @@ public class DoctorServiceImpl extends ServiceImpl<DoctorMapper, Doctor> impleme
 		if (departmentId != null) {
 			wrapper.eq(Doctor::getDepartmentId, departmentId);
 		}
-		wrapper.orderByDesc(Doctor::getCreateTime);
+		wrapper.orderByAsc(Doctor::getCreateTime);
 		IPage<Doctor> resultPage = this.page(listPage, wrapper);
 		List<DoctorVO> collectList = resultPage.getRecords().stream()
 				.map(copyMapper::DoctorToDoctorVO) // 逐个转换
