@@ -318,6 +318,7 @@ public class AppointServiceImpl implements AppointService {
 			}
 		} catch (Exception e) {
 			stringRedisTemplate.delete(idempotentKey);
+			throw new RuntimeException("取消失败", e);
 		}
 		stringRedisTemplate.delete(key);
 		return Result.success();
@@ -354,10 +355,20 @@ public class AppointServiceImpl implements AppointService {
 	}
 
 	@Override
+	@Transactional
 	public Result doctorCancel(AppointCancelDTO cancelDTO) {
 		UserDTO user = UserHolder.getUser();
 		if (user == null) {
 			return Result.fail(ERR_USER_NOT_LOGIN);
+		}
+		AppointOrder appointCancel = appointMapper.selectByOrderId(cancelDTO.getId());
+		if (appointCancel == null) {
+			return Result.fail("排班不存在");
+		}
+		//权限校验 验证该订单是不是该用户的
+		if (!appointCancel.getDoctorId().equals(cancelDTO.getId())) {
+			log.info("医生无权限取消");
+			return Result.fail("医生无权限取消");
 		}
 		AppointStatus setStatus = new AppointStatus();
 		setStatus.setOrderId(cancelDTO.getId());
@@ -367,26 +378,8 @@ public class AppointServiceImpl implements AppointService {
 		setStatus.setCancelRole("doctor");
 		appointMapper.updateStatus(setStatus);
 		log.info("取消成功");
-
-		AppointOrder appointCancel = appointMapper.selectByOrderId(cancelDTO.getId());
 		// 1. 数据库恢复号源
-		scheduleMapper.updateCountUp(appointCancel.getScheduleId());
-		//Redis操作状态
-		Long result = stringRedisTemplate.execute(
-				CANCEL_SCRIPT,
-				Collections.emptyList(),
-				appointCancel.getScheduleId().toString(),
-				appointCancel.getPatientId().toString()
-		);
-		int r;
-		if (result != null) {
-			r = result.intValue();
-			if (r != 0) {
-				log.info("取消失败");
-				return Result.fail("取消失败");
-			}
-		}
-		log.info("订单取消成功 orderId={}", cancelDTO.getId());
+		getResult(cancelDTO.getId(), appointCancel);
 		return Result.success();
 	}
 
@@ -411,6 +404,11 @@ public class AppointServiceImpl implements AppointService {
 		//更新订单状态
 		appointMapper.updateStatus(setStatus);
 		// 1. 数据库恢复号源
+		getResult(orderId, appointCancel);
+		return Result.success();
+	}
+
+	private Result getResult(Long orderId, AppointOrder appointCancel) {
 		scheduleMapper.updateCountUp(appointCancel.getScheduleId());
 		//Redis操作状态
 		Long result = stringRedisTemplate.execute(

@@ -36,8 +36,10 @@ public class AppointOrder {
 	private LocalDateTime payTime;
 	private LocalDateTime payDeadline;// 支付截止时间
 	private LocalDateTime confirmTime;
+	private LocalDateTime cancelTime;
 	private String cancelReason;
 	private String cancelRole;
+
 	@TableField(fill = FieldFill.INSERT_UPDATE)
 	private LocalDateTime updateTime;
 

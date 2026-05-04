@@ -6,6 +6,7 @@ import cn.hutool.json.JSONUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.google.common.hash.BloomFilter;
 import lombok.extern.slf4j.Slf4j;
+import org.example.common.mapstruct.CopyMapper;
 import org.example.mapper.AnnoMapper;
 import org.example.mapper.BannerMapper;
 import org.example.mapper.DoctorMapper;
@@ -14,6 +15,9 @@ import org.example.common.result.Result;
 import org.example.pojo.entity.Anno;
 import org.example.pojo.entity.Banner;
 import org.example.pojo.entity.Doctor;
+import org.example.pojo.vo.AnnoVO;
+import org.example.pojo.vo.BannerVO;
+import org.example.pojo.vo.DoctorVO;
 import org.example.service.HomeService;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -26,6 +30,7 @@ import javax.annotation.Resource;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.example.common.constants.MessageConstant.ERR_PARAM_ERROR;
 import static org.example.common.constants.RedisConstant.*;
@@ -49,6 +54,8 @@ public class HomeServiceImpl implements HomeService {
 	private DoctorMapper doctorMapper;
 	@Resource
 	private AnnoMapper annoMapper;
+	@Resource
+	private CopyMapper copyMapper;
 
 	@Override
 	public Result banners() {
@@ -63,7 +70,14 @@ public class HomeServiceImpl implements HomeService {
 					return bannerMapper.selectList(wrapper);
 				}
 		);
-		return Result.success(banners);
+		if (CollUtil.isEmpty(banners)) {
+			return Result.fail("暂无轮播图");
+		}
+		List<BannerVO> collect = banners.stream()
+				.map(banner -> copyMapper.BannerToBannerVO(banner))
+				.collect(Collectors.toList());
+
+		return Result.success(collect);
 	}
 
 	@Override
@@ -89,14 +103,20 @@ public class HomeServiceImpl implements HomeService {
 					}
 				}
 		);
-		return Result.success(doctors);
+		if (CollUtil.isEmpty(doctors)) {
+			return Result.fail("该科室下暂无医生");
+		}
+		List<DoctorVO> collect = doctors.stream()
+				.map(doctor -> copyMapper.DoctorToDoctorVO(doctor))
+				.collect(Collectors.toList());
+		return Result.success(collect);
 	}
 
 	@Override
 	public Result announcement(Long page, Long pageSize, Long type) {
 		String redisKey = HOME_ANNO_KEY + "page:" + page + "pageSize:" + pageSize + "type:" + type;
 		Long offset = (page - 1) * pageSize;
-		List<Anno> doctors = getThreeLevelCache(
+		List<Anno> appoints = getThreeLevelCache(
 				"cache:" + redisKey,
 				redisKey,
 				Anno.class,
@@ -104,7 +124,13 @@ public class HomeServiceImpl implements HomeService {
 					return annoMapper.selectLimit(offset, pageSize, type);
 				}
 		);
-		return Result.success(doctors);
+		if (CollUtil.isEmpty(appoints)) {
+			return Result.fail("暂无公告");
+		}
+		List<AnnoVO> collect = appoints.stream()
+				.map(doctor -> copyMapper.AnnoToAnnoVO(doctor))
+				.collect(Collectors.toList());
+		return Result.success(collect);
 	}
 
 	@Override
@@ -121,7 +147,13 @@ public class HomeServiceImpl implements HomeService {
 				.like(Anno::getContent, message)
 		);
 		List<Anno> anno = annoMapper.selectList(wrapper);
-		return Result.success(anno);
+		if (CollUtil.isEmpty(anno)) {
+			return Result.fail("暂无公告");
+		}
+		List<AnnoVO> collect = anno.stream()
+				.map(doctor -> copyMapper.AnnoToAnnoVO(doctor))
+				.collect(Collectors.toList());
+		return Result.success(collect);
 	}
 
 	@PostConstruct

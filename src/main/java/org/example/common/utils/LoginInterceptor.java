@@ -130,7 +130,7 @@ public class LoginInterceptor implements HandlerInterceptor {
 		// 7. 刷新 token 过期时间（滑动窗口机制，避免频繁重新登录）
 		String userTokenKey = LOGIN_USER_KEY + userDTO.getId();
 		stringRedisTemplate.expire(key, LOGIN_USER_TTL, TimeUnit.SECONDS);
-		stringRedisTemplate.expire(userTokenKey, LOGIN_USER_TTL, TimeUnit.SECONDS);
+		stringRedisTemplate.expire(userTokenKey, LOGIN_USER_TTL, TimeUnit.MINUTES);
 		return true;
 	}
 
