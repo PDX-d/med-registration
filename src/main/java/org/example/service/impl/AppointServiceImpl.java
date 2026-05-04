@@ -5,11 +5,10 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
-import net.bytebuddy.implementation.bytecode.Throw;
 import org.example.anno.SysLog;
-import org.example.common.exeption.AppointOrderException;
 import org.example.common.mapstruct.CopyMapper;
 import org.example.mapper.*;
+import org.example.pojo.dto.AppointCancelDTO;
 import org.example.pojo.entity.*;
 import org.example.pojo.dto.AppointOrderDTO;
 import org.example.pojo.dto.PayDTO;
@@ -119,7 +118,6 @@ public class AppointServiceImpl implements AppointService {
 		orderMap.put("orderId", orderId);
 		appointOrderDTO.setOrderId(orderId);
 		appointOrderDTO.setUserDTO(user);
-
 		//创建redis支付状态
 		String key = APPOINT_ORDER_STATUS_KEY + orderId;
 		stringRedisTemplate.opsForValue().set(key,
@@ -144,10 +142,8 @@ public class AppointServiceImpl implements AppointService {
 			);
 			throw new RuntimeException(e);
 		}
-
 		return Result.success(orderMap);
 	}
-
 
 	//前端redis实时查看预约数
 	@Override
@@ -190,7 +186,7 @@ public class AppointServiceImpl implements AppointService {
 		Map<Long, Doctor> doctorMap = doctorMapper.selectBatchIds(doctorIds)
 				.stream()
 				.collect(Collectors.toMap(Doctor::getId, doctor -> doctor));
-// 批量查询科室：收集所有不重复的 departmentId，一次查出
+		// 批量查询科室：收集所有不重复的 departmentId，一次查出
 		List<Long> departIds = appointOrders
 				.stream()
 				.map(AppointOrder::getDepartId)
@@ -207,6 +203,7 @@ public class AppointServiceImpl implements AppointService {
 			Doctor doctor = doctorMap.get(appointOrder.getDoctorId());
 			if (doctor != null) {
 				appointOrderVO.setDoctorName(doctor.getRealName());
+				appointOrderVO.setDoctorAvatar(doctor.getAvatar());
 				appointOrderVO.setTitle(doctor.getTitle());
 				Depart depart = departMap.get(doctor.getDepartmentId());
 				if (depart != null) {
@@ -249,13 +246,11 @@ public class AppointServiceImpl implements AppointService {
 						order.getPatientId());
 				return Result.fail("无权支付他人订单");
 			}
-
 			String status = stringRedisTemplate.opsForValue().get(key);
 			if (status == null || !status.equals(String.valueOf(PAY_STATUS_UNPAID))) {
 				//订单不存在或者已经支付
 				return Result.fail("支付失败");
 			}
-
 			stringRedisTemplate.opsForValue().set(key, String.valueOf(PAY_STATUS_PAID));
 			log.info("支付成功");
 			//支付记录表兜底
@@ -265,11 +260,11 @@ public class AppointServiceImpl implements AppointService {
 			payRecord.setPayStatus(String.valueOf(PAY_STATUS_PAID));
 			//添加支付记录
 			appointMapper.addPayRecord(payRecord);
-			Map<String, Object> map = new HashMap<>();
-			map.put("orderId", payDTO.getOrderId());
-			map.put("status", PAY_STATUS_PAID);
-			map.put("payTime", LocalDateTime.now());
-			appointMapper.updateStatus(map);
+			AppointStatus setStatus = new AppointStatus();
+			setStatus.setOrderId(payDTO.getOrderId());
+			setStatus.setStatus(PAY_STATUS_PAID);
+			setStatus.setPayTime(LocalDateTime.now());
+			appointMapper.updateStatus(setStatus);
 		} catch (Exception e) {
 			log.error("支付失败");
 			// 异常时手动回滚Redis状态
@@ -349,14 +344,49 @@ public class AppointServiceImpl implements AppointService {
 		if (user == null) {
 			return Result.fail(ERR_USER_NOT_LOGIN);
 		}
-		AppointOrder appointOrder = appointMapper.selectByOrderId(orderId);
-		appointOrder.setOrderId(orderId);
-		appointOrder.setOrderStatus(ORDER_STATUS_COMPLETED);
-		appointOrder.setUpdateTime(LocalDateTime.now());
-		int isSuccess = appointMapper.updateById(appointOrder);
-		if (isSuccess == 0) {
-			throw new AppointOrderException("更新失败");
+
+		AppointStatus setStatus = new AppointStatus();
+		setStatus.setOrderId(orderId);
+		setStatus.setStatus(ORDER_STATUS_COMPLETED);
+		setStatus.setConfirmTime(LocalDateTime.now());
+		appointMapper.updateStatus(setStatus);
+		return Result.success();
+	}
+
+	@Override
+	public Result doctorCancel(AppointCancelDTO cancelDTO) {
+		UserDTO user = UserHolder.getUser();
+		if (user == null) {
+			return Result.fail(ERR_USER_NOT_LOGIN);
 		}
+		AppointStatus setStatus = new AppointStatus();
+		setStatus.setOrderId(cancelDTO.getId());
+		setStatus.setStatus(ORDER_STATUS_CANCEL);
+		setStatus.setCancelTime(LocalDateTime.now());
+		setStatus.setCancelReason(cancelDTO.getCancelReason());
+		setStatus.setCancelRole("doctor");
+		appointMapper.updateStatus(setStatus);
+		log.info("取消成功");
+
+		AppointOrder appointCancel = appointMapper.selectByOrderId(cancelDTO.getId());
+		// 1. 数据库恢复号源
+		scheduleMapper.updateCountUp(appointCancel.getScheduleId());
+		//Redis操作状态
+		Long result = stringRedisTemplate.execute(
+				CANCEL_SCRIPT,
+				Collections.emptyList(),
+				appointCancel.getScheduleId().toString(),
+				appointCancel.getPatientId().toString()
+		);
+		int r;
+		if (result != null) {
+			r = result.intValue();
+			if (r != 0) {
+				log.info("取消失败");
+				return Result.fail("取消失败");
+			}
+		}
+		log.info("订单取消成功 orderId={}", cancelDTO.getId());
 		return Result.success();
 	}
 
@@ -372,12 +402,14 @@ public class AppointServiceImpl implements AppointService {
 			log.info("用户无权限取消");
 			return Result.fail("用户无权限取消");
 		}
-		Map<String, Object> map = new HashMap<>();
-		map.put("orderId", orderId);
-		map.put("status", ORDER_STATUS_CANCEL);
-		map.put("cancelTime", LocalDateTime.now());
+		AppointStatus setStatus = new AppointStatus();
+		setStatus.setOrderId(orderId);
+		setStatus.setStatus(ORDER_STATUS_CANCEL);
+		setStatus.setCancelTime(LocalDateTime.now());
+		setStatus.setCancelRole("user");
+		setStatus.setCancelReason(null);
 		//更新订单状态
-		appointMapper.updateStatus(map);
+		appointMapper.updateStatus(setStatus);
 		// 1. 数据库恢复号源
 		scheduleMapper.updateCountUp(appointCancel.getScheduleId());
 		//Redis操作状态

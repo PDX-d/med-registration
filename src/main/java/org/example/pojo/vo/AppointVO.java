@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,4 +19,7 @@ public class AppointVO {
 	private Integer status;
 	private LocalDate appointmentDate;
 	private LocalDateTime createTime;
+	private LocalDateTime confirmTime;
+	private String cancelRole;
+	private String cancelReason;
 }

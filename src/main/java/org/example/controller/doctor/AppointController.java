@@ -5,11 +5,13 @@ import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
 import org.example.anno.RequirePermission;
 import org.example.common.result.Result;
+import org.example.pojo.dto.AppointCancelDTO;
 import org.example.service.AppointService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 @Slf4j
@@ -38,5 +40,12 @@ public class AppointController {
 	@ApiOperation(value = "确认预约", notes = "确认预约")
 	public Result confirm(@PathVariable @NotNull(message = "预约ID不能为空") Long id) {
 		return appointService.confirm(id);
+	}
+
+	@PutMapping("/cancel")
+	@RequirePermission("doctor:appoint:cancel")
+	@ApiOperation(value = "取消预约", notes = "取消预约")
+	public Result cancel(@Valid @RequestBody AppointCancelDTO cancelDTO) {
+		return appointService.doctorCancel(cancelDTO);
 	}
 }

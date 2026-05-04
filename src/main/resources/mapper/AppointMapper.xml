@@ -12,17 +12,19 @@
         <set>
             <if test="status==1">
                 pay_status = #{status},
-                order_status = #{status}
-            </if>
-            <if test="status==2">
-                order_status = #{status}
+                order_status = #{status},
+                pay_time = #{payTime},
             </if>
 
-            <if test="payTime != null">
-                ,pay_time = #{payTime}
+            <if test="status==2">
+                order_status = #{status},
+                cancel_role = #{cancelRole},
+                cancel_time = #{cancelTime},
+                cancel_reason = #{cancelReason},
             </if>
-            <if test="cancelTime != null">
-                ,cancel_time = #{cancelTime}
+            <if test="status==3">
+                order_status = #{status},
+                confirm_time = #{confirmTime}
             </if>
         </set>
         where order_id = #{orderId}
@@ -52,6 +54,9 @@
     <select id="selectDoctorListPage" resultType="org.example.pojo.vo.AppointVO">
         SELECT
         o.order_id as id,
+        o.confirm_time,
+        o.cancel_role,
+        o.cancel_reason,
         o.patient_id,
         o.doctor_id,
         o.depart_id,
@@ -68,9 +73,12 @@
         LEFT JOIN doctor d ON o.doctor_id = d.id
         LEFT JOIN depart dep ON o.depart_id = dep.id
         <where>
-            o.doctor_id = #{id}
+            o.doctor_id = #{id} and o.pay_status in (1,2)
             <if test="status != null and status != ''">
                 AND o.order_status = #{status}
+            </if>
+            <if test="status == null or status == ''">
+                AND o.order_status in (1,2,3,4) -- 默认查询
             </if>
 
             <if test="time != null and time != ''">

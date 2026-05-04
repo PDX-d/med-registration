@@ -1,5 +1,6 @@
 package org.example.service;
 
+import org.example.pojo.dto.AppointCancelDTO;
 import org.example.pojo.dto.AppointOrderDTO;
 import org.example.common.result.Result;
 import org.example.pojo.dto.PayDTO;
@@ -18,4 +19,6 @@ public interface AppointService {
 	Result DoctorList(Long page, Long pageSize, String status, String time, String keyword);
 
 	Result confirm(Long orderId);
+
+	Result doctorCancel(AppointCancelDTO cancelDTO);
 }

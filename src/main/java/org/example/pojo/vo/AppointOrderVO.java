@@ -17,6 +17,7 @@ public class AppointOrderVO {
 
 	// ==================== 医生信息 ====================
 	private String doctorName;          // 医生姓名：如 "张医生"
+	private String doctorAvatar;
 	private String title;               // 医生职称：如 "主任医师" / "副主任医师"
 	private String departmentName;      // 科室名称：如 "心血管内科"
 
