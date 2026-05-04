@@ -40,7 +40,7 @@ public class ScheduleController {
 
 	@GetMapping("/schedule/my")
 	@ApiOperation(value = "获取排班列表", notes = "获取排班列表")
-	@RequirePermission("schedule:list")
+	@RequirePermission("schedule:view")
 	public Result list(@RequestParam Long page,
 					   @RequestParam Long pageSize,
 					   @RequestParam(required = false) String departmentId,

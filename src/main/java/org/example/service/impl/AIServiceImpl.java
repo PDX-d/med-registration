@@ -214,6 +214,7 @@ public class AIServiceImpl implements AIService {
 				list.add(h);
 			}
 		}
+		log.info("获取历史记录: {}", list);
 		return Result.success(list);
 	}
 }

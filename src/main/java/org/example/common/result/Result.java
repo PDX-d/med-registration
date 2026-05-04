@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 public class Result implements Serializable {
 	private Integer code;
-	private String errorMsg;
+	private String message;
 	private Object data;
 	private Long total;
 

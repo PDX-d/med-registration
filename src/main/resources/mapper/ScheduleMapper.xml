@@ -22,7 +22,7 @@
     </update>
     <update id="updateStatus">
         update schedule
-        set status = 0
+        set status = #{status}
         where id = #{id}
     </update>
 </mapper>

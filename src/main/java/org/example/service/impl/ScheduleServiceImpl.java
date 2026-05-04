@@ -202,7 +202,7 @@ public class ScheduleServiceImpl extends ServiceImpl<ScheduleMapper, Schedule> i
 		} catch (Exception e) {
 			return Result.fail("排班不存在");
 		}
-		clearDepartCache(scheduleDTO.getId());
+		clearDepartCache(user.getId());
 		return Result.success();
 	}
 }

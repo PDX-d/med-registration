@@ -51,7 +51,12 @@
     </select>
     <select id="selectDoctorListPage" resultType="org.example.pojo.vo.AppointVO">
         SELECT
-        o.order_status as  status,
+        o.order_id as id,
+        o.patient_id,
+        o.doctor_id,
+        o.depart_id,
+        o.schedule_id,
+        o.order_status as status,
         o.create_time,
         o.time_slot,
         o.schedule_date AS appointment_date,

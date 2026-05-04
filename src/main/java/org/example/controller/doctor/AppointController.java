@@ -6,17 +6,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.anno.RequirePermission;
 import org.example.common.result.Result;
 import org.example.service.AppointService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import javax.validation.constraints.NotNull;
 
 @Slf4j
 @RestController("doctorAppoint")
 @RequestMapping("/doctor/appointment")
 @Api(tags = "医生预约")
+@Validated
 public class AppointController {
 	@Resource
 	private AppointService appointService;
@@ -33,4 +33,10 @@ public class AppointController {
 		return appointService.DoctorList(page, pageSize, status, Time, keyword);
 	}
 
+	@PutMapping("/confirm/{id}")
+	@RequirePermission("doctor:appoint:confirm")
+	@ApiOperation(value = "确认预约", notes = "确认预约")
+	public Result confirm(@PathVariable @NotNull(message = "预约ID不能为空") Long id) {
+		return appointService.confirm(id);
+	}
 }

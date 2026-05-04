@@ -5,7 +5,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.implementation.bytecode.Throw;
 import org.example.anno.SysLog;
+import org.example.common.exeption.AppointOrderException;
 import org.example.common.mapstruct.CopyMapper;
 import org.example.mapper.*;
 import org.example.pojo.entity.*;
@@ -326,6 +328,7 @@ public class AppointServiceImpl implements AppointService {
 		return Result.success();
 	}
 
+	//医生列表
 	@Override
 	public Result DoctorList(Long page, Long pageSize, String status, String time, String keyword) {
 		UserDTO user = UserHolder.getUser();
@@ -337,6 +340,24 @@ public class AppointServiceImpl implements AppointService {
 				.selectDoctorListPage(pageParam, status, time, keyword, user.getId());
 
 		return Result.success(pageModel.getRecords(), pageModel.getTotal());
+	}
+
+	//确认订单
+	@Override
+	public Result confirm(Long orderId) {
+		UserDTO user = UserHolder.getUser();
+		if (user == null) {
+			return Result.fail(ERR_USER_NOT_LOGIN);
+		}
+		AppointOrder appointOrder = appointMapper.selectByOrderId(orderId);
+		appointOrder.setOrderId(orderId);
+		appointOrder.setOrderStatus(ORDER_STATUS_COMPLETED);
+		appointOrder.setUpdateTime(LocalDateTime.now());
+		int isSuccess = appointMapper.updateById(appointOrder);
+		if (isSuccess == 0) {
+			throw new AppointOrderException("更新失败");
+		}
+		return Result.success();
 	}
 
 
