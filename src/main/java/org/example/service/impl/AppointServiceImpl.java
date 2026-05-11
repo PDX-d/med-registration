@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.example.anno.SysLog;
 import org.example.common.mapstruct.CopyMapper;
+import org.example.common.utils.DesensitizeUtil;
 import org.example.mapper.*;
 import org.example.pojo.dto.AppointCancelDTO;
 import org.example.pojo.entity.*;
@@ -39,6 +40,7 @@ import static org.example.common.constants.OrderConstant.*;
 import static org.example.common.constants.RabbitMQConstant.*;
 import static org.example.common.constants.RedisConstant.*;
 import static org.example.common.constants.MessageConstant.ERR_USER_NOT_LOGIN;
+import static org.example.common.utils.RegexUtils.isPhoneInvalid;
 
 @Service
 @Slf4j
@@ -334,7 +336,6 @@ public class AppointServiceImpl implements AppointService {
 		Page<AppointOrder> pageParam = new Page<>(page, pageSize);
 		IPage<AppointVO> pageModel = appointMapper
 				.selectDoctorListPage(pageParam, status, time, keyword, user.getId());
-
 		return Result.success(pageModel.getRecords(), pageModel.getTotal());
 	}
 
@@ -345,7 +346,14 @@ public class AppointServiceImpl implements AppointService {
 		if (user == null) {
 			return Result.fail(ERR_USER_NOT_LOGIN);
 		}
-
+		AppointOrder appoint = appointMapper.selectByOrderId(orderId);
+		if (appoint == null) {
+			return Result.fail("订单不存在");
+		}
+		if (!appoint.getDoctorId().equals(user.getId())) {
+			log.info("医生{}尝试确认他人订单{}, 订单所属用户{}", user.getId(), orderId, appoint.getDoctorId());
+			return Result.fail("无权确认他人订单");
+		}
 		AppointStatus setStatus = new AppointStatus();
 		setStatus.setOrderId(orderId);
 		setStatus.setStatus(ORDER_STATUS_COMPLETED);
@@ -381,6 +389,18 @@ public class AppointServiceImpl implements AppointService {
 		// 1. 数据库恢复号源
 		getResult(cancelDTO.getId(), appointCancel);
 		return Result.success();
+	}
+
+	@Override
+	public Result adminList(Long page, Long pageSize, String status, String time, String keyword, String doctorKeyword) {
+		UserDTO user = UserHolder.getUser();
+		if (user == null) {
+			return Result.fail(ERR_USER_NOT_LOGIN);
+		}
+		Page<AppointOrder> pageParam = new Page<>(page, pageSize);
+		IPage<AppointVO> pageModel = appointMapper
+				.selectAdminListPage(pageParam, status, time, keyword, doctorKeyword);
+		return Result.success(pageModel.getRecords(), pageModel.getTotal());
 	}
 
 

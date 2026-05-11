@@ -29,4 +29,6 @@ public interface AppointMapper extends BaseMapper<AppointOrder> {
 			String time,
 			String keyword,
 			Long id);
+
+	IPage<AppointVO> selectAdminListPage(Page<AppointOrder> pageParam, String status, String time, String keyword, String doctorKeyword);
 }

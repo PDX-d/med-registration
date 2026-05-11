@@ -30,4 +30,7 @@ public class AdminController {
 	) {
 		return adminService.list(page, pageSize, keyword);
 	}
+
+
+
 }

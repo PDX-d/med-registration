@@ -55,6 +55,7 @@
         SELECT
         o.order_id as id,
         o.confirm_time,
+        d.real_name as doctor_name,
         o.cancel_role,
         o.cancel_reason,
         o.patient_id,
@@ -82,7 +83,7 @@
             </if>
 
             <if test="time != null and time != ''">
-                AND o.schedule_data = #{time}
+                AND o.schedule_date = #{time}
             </if>
 
             <!-- 动态条件：关键词搜索 (模糊匹配医生名字或订单号) -->
@@ -96,8 +97,50 @@
         ORDER BY o.create_time DESC
 
     </select>
+    <select id="selectAdminListPage" resultType="org.example.pojo.vo.AppointVO">
+        SELECT
+        o.order_id as id,
+        o.confirm_time,
+        d.real_name as doctor_name,
+        o.cancel_role,
+        o.cancel_reason,
+        o.patient_id,
+        o.doctor_id,
+        o.depart_id,
+        o.schedule_id,
+        o.order_status as status,
+        o.create_time,
+        o.time_slot,
+        o.schedule_date AS appointment_date,
+        u.real_name AS patient_name,
+        u.phone AS patient_phone,
+        dep.name AS department_name
+        FROM appoint_order o
+        LEFT JOIN user u ON o.patient_id = u.id
+        LEFT JOIN doctor d ON o.doctor_id = d.id
+        LEFT JOIN depart dep ON o.depart_id = dep.id
+        <where>
+            <if test="status != null and status != ''">
+                AND o.order_status = #{status}
+            </if>
+            <if test="time != null and time != ''">
+                AND o.schedule_date = #{time}
+            </if>
 
+            <!-- 动态条件：关键词搜索 (模糊匹配医生名字或订单号) -->
+            <if test="keyword != null and keyword != ''">
+                AND (
+                u.real_name LIKE CONCAT('%', #{keyword}, '%')
+                OR u.phone LIKE CONCAT('%', #{keyword}, '%')
+                )
+            </if>
+            <if test="doctorKeyword != null and doctorKeyword !=''">
+                and(d.name like concat('%',#{doctorKeyword},'%'))
+            </if>
+        </where>
+        ORDER BY o.create_time DESC
 
+    </select>
 
 
 </mapper>
